@@ -1,0 +1,234 @@
+.header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+.header-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  /* Sử dụng Flexbox để căn chỉnh 3 cột */
+  display: flex;
+  align-items: center; /* Căn giữa các item theo chiều dọc */
+  justify-content: space-between; /* Đẩy logo sang trái và cụm icon sang phải */
+  padding: 0 40px; /* Thêm khoảng trống hai bên */
+  height: 80px; /* Tăng chiều cao để thoáng hơn */
+}
+
+/* --- Logo --- */
+/* Bỏ flex-basis cố định để logo tự co giãn */
+.logo {
+  margin-left: -50px; /* Nhích logo sang trái */
+}
+
+.logo h1 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000000;
+  margin: 0;
+  margin-top: 12px; /* Nhích logo xuống 1 chút */
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* --- Navigation Menu --- */
+.nav-menu {
+  flex: 1; /* Cho phép menu chiếm hết không gian trống ở giữa */
+  display: flex;
+  justify-content: center; /* Căn giữa danh sách menu */
+}
+
+.nav-list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 45px; /* Khoảng cách giữa các mục menu */
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #000000;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.nav-link:hover {
+  color: #666666;
+}
+
+/* --- Cụm bên phải (Search & Icons) --- */
+.header-right {
+  /* Bỏ flex-basis cố định */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 25px; /* Khoảng cách giữa các icon và search box */
+  margin-right: -50px; /* Nhích cụm icons sang phải */
+}
+
+/* Search Container - Chỉnh lại style cho giống hình ảnh */
+.search-container {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d1d1d1;
+  border-radius: 20px; /* Bo tròn góc */
+  background-color: #ffffff;
+  padding: 6px 15px;
+  overflow: hidden;
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  background-color: transparent;
+  width: 160px;
+  font-size: 13px;
+  color: #000000;
+}
+
+.search-input::placeholder {
+  color: #999999;
+  font-size: 13px;
+}
+
+.search-btn {
+  border: none;
+  background-color: transparent;
+  padding: 0 0 0 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #333333;
+}
+
+/* --- Icons --- */
+.header-icon {
+  cursor: pointer;
+  color: #000000;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-icon:hover {
+  color: #666666;
+}
+
+.cart-icon {
+  position: relative;
+  /* Xóa margin-right vì đã có gap trong .header-right */
+}
+
+.cart-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background-color: #000000;
+  color: #ffffff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .header-container {
+    max-width: 100%;
+    padding: 15px 40px;
+  }
+  
+  .logo {
+    flex: 0 0 180px;
+  }
+  
+  .nav-menu {
+    margin: 0 25px;
+  }
+  
+  .nav-list {
+    gap: 35px;
+  }
+  
+  .header-right {
+    flex: 0 0 180px;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-container {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 30px;
+  }
+  
+  .logo {
+    flex: 0 0 auto;
+  }
+  
+  .nav-menu {
+    order: 3;
+    width: 100%;
+    margin: 15px 0 0 0;
+  }
+  
+  .nav-list {
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+  }
+  
+  .search-input {
+    width: 120px;
+  }
+  
+  .header-right {
+    flex: 0 0 auto;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-container {
+    padding: 10px 20px;
+  }
+  
+  .nav-list {
+    gap: 18px;
+  }
+  
+  .header-right {
+    gap: 15px;
+  }
+  
+  .nav-link {
+    font-size: 13px;
+  }
+  
+  .search-input {
+    width: 100px;
+  }
+} 
