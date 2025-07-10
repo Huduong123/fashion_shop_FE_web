@@ -86,6 +86,9 @@
   aspect-ratio: 1 / 1.2;
   overflow: hidden;
   background-color: #f8f9fa;
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 .product-image {
@@ -99,54 +102,7 @@
   transform: scale(1.05);
 }
 
-/* Product Badges */
-.product-badges {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  z-index: 2;
-}
 
-.badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: fit-content;
-}
-
-.badge.best-seller {
-  background-color: #e74c3c;
-  color: white;
-  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
-}
-
-.badge.best-seller svg {
-  width: 12px;
-  height: 12px;
-}
-
-/* Discount Badge */
-.discount-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background-color: #e74c3c;
-  color: white;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  z-index: 2;
-}
 
 /* Price and Actions Container */
 .price-actions-container {
@@ -198,6 +154,16 @@
   padding: 20px 16px;
 }
 
+.bestseller-name-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.bestseller-name-link:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
 .product-name {
   font-size: 15px;
   font-weight: 500;
@@ -209,6 +175,11 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 40px;
+  transition: color 0.3s ease;
+}
+
+.bestseller-name-link:hover .product-name {
+  color: #e74c3c;
 }
 
 
@@ -313,6 +284,7 @@
     align-items: flex-start;
     gap: 8px;
   }
+
 }
 
 @media (max-width: 480px) {
@@ -366,6 +338,7 @@
     align-items: flex-start;
     gap: 6px;
   }
+
 }
 
 /* Animation for better UX */

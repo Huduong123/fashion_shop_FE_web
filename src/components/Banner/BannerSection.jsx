@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import './Banner.css';
+import './BannerSection.css';
 
-const Banner = () => {
+const BannerSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Banner data - in real app, these would be actual image URLs
@@ -163,4 +163,4 @@ const Banner = () => {
   );
 };
 
-export default Banner; 
+export default BannerSection; 

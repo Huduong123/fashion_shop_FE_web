@@ -1,0 +1,125 @@
+/* --- Phiên bản cải tiến --- */
+
+/* Biến màu để dễ dàng thay đổi và quản lý */
+:root {
+  --primary-color: #007bff; /* Một màu xanh dương hiện đại */
+  --text-dark: #212529;
+  --text-light: #6c757d;
+  --background-light: #f8f9fa;
+  --border-color: #dee2e6;
+  --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  --card-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.features-section {
+  /* Sử dụng màu nền nhẹ để tách biệt section, hiện đại hơn border */
+  background-color: var(--background-light); 
+  padding: 60px 0; /* Tăng khoảng trống trên dưới */
+}
+
+.features-container {
+  max-width: 1200px; /* Điều chỉnh lại max-width cho cân đối */
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.features-grid {
+  display: grid;
+  /* Sử dụng auto-fit để grid tự động điều chỉnh số cột */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px; /* Tăng khoảng cách giữa các card */
+}
+
+.feature-item-card {
+  display: flex;
+  align-items: center; /* Căn giữa icon và nội dung theo chiều dọc */
+  gap: 16px;
+  padding: 25px;
+  background: #ffffff;
+  border-radius: 12px; /* Bo góc mềm mại hơn */
+  border: 1px solid var(--border-color); /* Border tinh tế hơn */
+  box-shadow: var(--card-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.feature-item-card:hover {
+  transform: translateY(-5px); /* Hiệu ứng nổi lên rõ hơn */
+  box-shadow: var(--card-shadow-hover);
+}
+
+.feature-item-icon {
+  font-size: 28px; /* Icon to và nổi bật hơn */
+  color: var(--primary-color);
+  flex-shrink: 0;
+  /* Thêm nền cho icon để tạo điểm nhấn */
+  background-color: rgba(0, 123, 255, 0.1);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-item-content {
+  flex: 1;
+}
+
+.feature-item-title {
+  font-size: 16px; /* Tăng font-size để dễ đọc hơn */
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 0 0 5px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+}
+
+.feature-item-description {
+  font-size: 14px; /* Tăng font-size, rất quan trọng cho trải nghiệm người dùng */
+  color: var(--text-light);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .features-grid {
+    /* Cho phép 2 cột trên tablet */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .features-section {
+    padding: 40px 0;
+  }
+  .feature-item-card {
+    padding: 20px;
+  }
+  .feature-item-title {
+    font-size: 15px;
+  }
+  .feature-item-description {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 576px) {
+  .features-grid {
+    /* 1 cột trên mobile */
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .feature-item-card {
+    flex-direction: column; /* Chuyển sang layout dọc */
+    text-align: center;   /* Căn giữa text */
+  }
+  
+  .feature-item-content {
+    margin-top: 10px;
+  }
+}
