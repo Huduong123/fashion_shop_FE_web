@@ -1,7 +1,14 @@
 import React from 'react';
-import './Blog.css';
+import { useNavigate } from 'react-router-dom';
+import './BlogSection.css';
 
-const Blog = () => {
+const BlogSection = () => {
+  const navigate = useNavigate();
+
+  const handleViewAllBlogs = () => {
+    navigate('/blog');
+  };
+
   const blogPosts = [
     {
       id: 1,
@@ -60,7 +67,7 @@ const Blog = () => {
 
         {/* View All Button */}
         <div className="blog-footer">
-          <button className="view-all-blog-btn">
+          <button className="view-all-blog-btn" onClick={handleViewAllBlogs}>
             XEM TẤT CẢ
           </button>
         </div>
@@ -69,4 +76,4 @@ const Blog = () => {
   );
 };
 
-export default Blog; 
+export default BlogSection; 

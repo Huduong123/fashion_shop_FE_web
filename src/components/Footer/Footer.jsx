@@ -5,6 +5,7 @@ import Instagram from '../../assets/images/icons/instagram.png';
 import Youtube from '../../assets/images/icons/youtube.png';
 import Momo from '../../assets/images/icons/momo.png';
 import Vnpay from '../../assets/images/icons/vnpay.png';
+import Logo from '../../assets/images/logo/logo1.jpg';
 
 const Footer = () => {
   return (
@@ -15,20 +16,13 @@ const Footer = () => {
           {/* Company Info */}
           <div className="footer-column company-info">
             <div className="logos">
-              <div className="logo john-henry">
-                <div className="logo-icon">JH</div>
-                <span>JOHN HENRY</span>
-              </div>
-              <div className="logo freelancer">
-                <div className="logo-icon">FL</div>
-                <span>FREELANCER</span>
-              </div>
+              <img src={Logo} alt="Company Logo" className="company-logo" />
             </div>
             
             <div className="company-details">
               <div className="detail-item">
                 <span className="icon">🏢</span>
-                <span>Công ty TNHH T.M.G</span>
+                <span>Công ty TNHH NTA GROUP</span>
               </div>
               <div className="detail-item">
                 <span className="icon">📍</span>
@@ -40,17 +34,10 @@ const Footer = () => {
               </div>
               <div className="detail-item">
                 <span className="icon">✉️</span>
-                <span>cskh@viet-styles.com</span>
+                <span>cskh@ntagroup.com</span>
               </div>
             </div>
 
-            <div className="certification-badge">
-              <div className="badge-icon">✓</div>
-              <div className="badge-text">
-                <span>ĐÃ THÔNG BÁO</span>
-                <span>BỘ CÔNG THƯƠNG</span>
-              </div>
-            </div>
           </div>
 
           {/* Company Links */}
@@ -91,7 +78,7 @@ const Footer = () => {
                   placeholder="Email" 
                   className="email-input"
                 />
-                <button className="subscribe-btn">✈️</button>
+                <button className="subscribe-btn">Gửi</button>
               </div>
             </div>
 
@@ -127,7 +114,7 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="footer-bottom">
           <p className="copyright">
-            Copyright © 2025 John Henry & Freelancer
+            Copyright © 2025 NTA GROUP
           </p>
         </div>
       </div>

@@ -29,6 +29,15 @@
   margin-bottom: 30px;
 }
 
+.company-logo {
+  height: 80px;
+  width: auto;
+  max-width: 250px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-left: 20px;
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -128,10 +137,27 @@
   list-style: none;
   padding: 0;
   margin: 0;
+  padding-left: 0; /* Đảm bảo bằng với column-title */
+  display: flex;
+  flex-direction: column; /* Đảm bảo các li xuống dòng */
 }
 
 .footer-links li {
   margin-bottom: 12px;
+  display: block !important; /* Đảm bảo mỗi li xuống dòng */
+  position: relative;
+  padding-left: 15px; /* Tạo khoảng trống cho dấu chấm */
+  width: 100%; /* Chiếm toàn bộ chiều rộng */
+  float: none !important; /* Ngăn float */
+  clear: both; /* Clear float */
+}
+
+.footer-links li::before {
+  content: "•"; /* Dấu chấm đen */
+  position: absolute;
+  left: 0;
+  color: #333;
+  font-weight: bold;
 }
 
 .footer-links a {
@@ -140,6 +166,8 @@
   font-size: 14px;
   line-height: 1.4;
   transition: color 0.3s ease;
+  display: block !important; /* Đảm bảo link chiếm toàn bộ chiều rộng */
+  width: 100%;
 }
 
 .footer-links a:hover {
@@ -178,10 +206,12 @@
   background-color: #dc3545;
   color: white;
   border: none;
-  padding: 10px 15px;
+  padding: 10px 18px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 600;
   transition: background-color 0.3s ease;
+  white-space: nowrap;
 }
 
 .subscribe-btn:hover {
@@ -303,6 +333,12 @@
     justify-content: center;
   }
   
+  .company-logo {
+    height: 65px;
+    max-width: 200px;
+    margin-left: 15px;
+  }
+  
   .certification-badge {
     margin: 0 auto;
   }
@@ -318,6 +354,12 @@
     flex-direction: column;
     align-items: center;
     gap: 15px;
+  }
+  
+  .company-logo {
+    height: 60px;
+    max-width: 200px;
+    margin-left: 40px;
   }
   
   .social-row {

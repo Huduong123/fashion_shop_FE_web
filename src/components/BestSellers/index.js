@@ -1,1 +1,1 @@
-export { default } from './BestSellers'; 
+export { default } from './BestSellersSection'; 

@@ -1,0 +1,146 @@
+/* AccountSideBar.css */
+
+:root {
+  --primary-color: #a42124; /* Màu đỏ đậm của John Henry */
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --border-color: #dee2e6;
+  --background-color: #ffffff;
+}
+
+.account-sidebar {
+  width: 300px;
+  background: var(--background-color);
+  border-radius: 16px;
+  padding: 30px 20px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* --- Logo Section --- */
+.sidebar-logo {
+  text-align: center;
+  margin-bottom: -10px; /* Giảm khoảng cách với phần user-info */
+}
+
+.logo-image {
+  max-width: 130px;
+  height: auto;
+}
+
+/* --- User Info Section --- */
+.user-info {
+  text-align: left;
+  padding-left: 10px; /* Căn lề cho giống mẫu */
+}
+
+.user-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.user-email,
+.user-points {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.points-value {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+
+/* --- Menu Section --- */
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Khoảng cách giữa các nút */
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 50px; /* Tạo hình viên thuốc */
+  background: var(--background-color);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: left;
+}
+
+.logout-item {
+  margin-top: 5px; /* Khoảng cách nhỏ cho nút logout */
+}
+
+/* --- Menu Icon --- */
+.menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px; /* Giữ kích thước icon ổn định */
+  border-radius: 50%; /* Vòng tròn */
+  border: 1.5px solid var(--border-color);
+  margin-right: 12px;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Icon bên trong vòng tròn */
+.menu-icon svg {
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: color 0.2s ease-in-out;
+}
+
+.menu-label {
+  flex-grow: 1;
+}
+
+/* --- Active State --- */
+.menu-item.active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.menu-item.active .menu-icon {
+  background-color: white;
+  border-color: white;
+}
+
+.menu-item.active .menu-icon svg {
+  color: var(--primary-color);
+}
+
+
+/* --- Hover State --- */
+.menu-item:not(.active):hover {
+  border-color: var(--primary-color);
+}
+
+.menu-item:not(.active):hover .menu-icon {
+  border-color: var(--primary-color);
+}
+
+
+/* --- Responsive (Tùy chọn) --- */
+@media (max-width: 768px) {
+  .account-sidebar {
+    width: 100%;
+    padding: 20px;
+  }
+}

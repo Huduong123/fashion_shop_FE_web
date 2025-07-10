@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import './BestSellers.css';
+import { Link } from 'react-router-dom';
+import './BestSellersSection.css';
 import product1 from '../../assets/images/product1.webp';
-const BestSellers = () => {
+const BestSellersSection = ({ onOpenModal }) => {
   const [favoriteProducts, setFavoriteProducts] = useState(new Set());
 
   // Sample product data - thay thế bằng data thực từ API
@@ -9,35 +10,29 @@ const BestSellers = () => {
     {
       id: 1,
       name: "Áo Khoác Nam Thời Trang JK25FH02P-CT",
-      price: 1500000,
-      originalPrice: null,
-      discount: null,
+      price: 390000,
+      originalPrice: 1500000,
+      discount: 74,
       image:  product1,
-      colors: ['#D4D4D4', '#8B4513'],
-      isNewArrival: false,
-      isBestSeller: true
+      colors: ['#D4D4D4', '#8B4513']
     },
     {
       id: 2,
       name: "Áo Khoác Nam Thời Trang JK25SS01T-PA",
-      price: 1200000,
-      originalPrice: null,
-      discount: null,
+      price: 720000,
+      originalPrice: 1200000,
+      discount: 40,
       image: product1,
-      colors: ['#E6E6FA', '#D3D3D3'],
-      isNewArrival: false,
-      isBestSeller: true
+      colors: ['#E6E6FA', '#D3D3D3']
     },
     {
       id: 3,
       name: "Áo Polo Form Vừa Tay Ngắn KS25ES28T",
-      price: 700000,
-      originalPrice: null,
-      discount: null,
+      price: 525000,
+      originalPrice: 700000,
+      discount: 25,
       image: product1,
-      colors: ['#87CEEB', '#FFB6C1'],
-      isNewArrival: true,
-      isBestSeller: false
+      colors: ['#87CEEB', '#FFB6C1']
     },
     {
       id: 4,
@@ -46,31 +41,25 @@ const BestSellers = () => {
       originalPrice: null,
       discount: null,
       image: product1,
-      colors: ['#8B4513', '#D2B48C'],
-      isNewArrival: false,
-      isBestSeller: false
+      colors: ['#8B4513', '#D2B48C']
     },
     {
       id: 5,
       name: "Áo Khoác Nữ UV Pro Windbreaker WOK 2058",
-      price: 679000,
+      price: 437000,
       originalPrice: 729000,
-      discount: 7,
+      discount: 40,
       image: product1,
-      colors: ['#FFB6C1', '#4169E1', '#D3D3D3', '#000000'],
-      isNewArrival: true,
-      isBestSeller: true
+      colors: ['#FFB6C1', '#4169E1', '#D3D3D3', '#000000']
     },
     {
       id: 6,
       name: "Áo Khoác Nam UV Pro Windbreaker MOK 1058",
-      price: 699000,
+      price: 524000,
       originalPrice: 749000,
-      discount: 7,
+      discount: 30,
       image: product1,
-      colors: ['#4169E1', '#D3D3D3'],
-      isNewArrival: true,
-      isBestSeller: true
+      colors: ['#4169E1', '#D3D3D3']
     },
     {
       id: 7,
@@ -79,20 +68,16 @@ const BestSellers = () => {
       originalPrice: null,
       discount: null,
       image: product1,
-      colors: ['#8B4513', '#D3D3D3'],
-      isNewArrival: true,
-      isBestSeller: true
+      colors: ['#8B4513', '#D3D3D3']
     },
     {
       id: 8,
       name: "Áo Khoác Nam Airlayer By Color MOK 1067",
-      price: 749000,
-      originalPrice: null,
-      discount: null,
+      price: 524000,
+      originalPrice: 749000,
+      discount: 30,
       image: product1,
-      colors: ['#808080', '#FFB6C1'],
-      isNewArrival: true,
-      isBestSeller: true
+      colors: ['#808080', '#FFB6C1']
     }
   ];
 
@@ -128,35 +113,20 @@ const BestSellers = () => {
         <div className="products-grid">
           {products.map((product) => (
             <div key={product.id} className="product-card">
-              {/* Product Image */}
-              <div className="product-image-container">
+              {/* Product Image - Clickable */}
+              <Link to={`/product/${product.id}`} className="product-image-container">
                 <img 
                   src={product.image} 
                   alt={product.name}
                   className="product-image"
                 />
-                
-                                 {/* Badges */}
-                <div className="product-badges">
-                  {product.isBestSeller && (
-                    <span className="badge best-seller">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
-                      </svg>
-                      BEST SELLER
-                    </span>
-                  )}
-                </div>
-
-                                 {/* Discount Badge */}
-                {product.discount && (
-                  <span className="discount-badge">-{product.discount}%</span>
-                )}
-              </div>
+              </Link>
 
               {/* Product Info */}
               <div className="product-info">
-                <h3 className="product-name">{product.name}</h3>
+                <Link to={`/product/${product.id}`} className="bestseller-name-link">
+                  <h3 className="product-name">{product.name}</h3>
+                </Link>
 
                 {/* Price and Actions */}
                 <div className="price-actions-container">
@@ -175,7 +145,10 @@ const BestSellers = () => {
                      >
                        {favoriteProducts.has(product.id) ? '♥' : '♡'}
                      </button>
-                     <button className="action-btn cart-btn">
+                     <button 
+                       className="action-btn cart-btn"
+                       onClick={() => onOpenModal && onOpenModal(product)}
+                     >
                        🛒
                      </button>
                   </div>
@@ -189,4 +162,4 @@ const BestSellers = () => {
   );
 };
 
-export default BestSellers; 
+export default BestSellersSection; 
