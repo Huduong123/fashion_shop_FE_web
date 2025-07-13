@@ -1,15 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './Header.css';
 import CartModal from '../CartModal';
 import UserDropdown from '../UserDropdown';
+import categoryService from '../../services/categoryService';
 
 const Header = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuth();
   const [showCartModal, setShowCartModal] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [menuLoading, setMenuLoading] = useState(true);
+  const [childrenCache, setChildrenCache] = useState({}); // Cache children by parentId
+  const [loadingChildren, setLoadingChildren] = useState({}); // Track loading state for children
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setMenuLoading(true);
+        const categoriesData = await categoryService.getRootCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        // Fallback to empty array if API fails
+        setCategories([]);
+      } finally {
+        setMenuLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Function to handle navigation to products page
   const handleProductNavigation = (category, subcategory = '') => {
@@ -27,8 +51,6 @@ const Header = () => {
       navigate('/login');
     }
   };
-
-
 
   // Function to handle cart icon click
   const handleCartIconClick = () => {
@@ -51,135 +73,116 @@ const Header = () => {
     navigate('/');
   };
 
-  // Menu data structure with dropdowns
-  const menuData = [
-    {
-      label: 'HÀNG MỚI',
-      action: () => handleProductNavigation('all', 'Hàng mới'),
-      dropdown: [
-        { label: 'Sản phẩm mới nhất', action: () => handleProductNavigation('all', 'Sản phẩm mới nhất') },
-        { label: 'Xu hướng hot', action: () => handleProductNavigation('all', 'Xu hướng hot') },
-        { label: 'Best seller', action: () => handleProductNavigation('all', 'Best seller') }
-      ]
-    },
-    {
-      label: 'ÁO KHOÁC',
-      action: () => handleProductNavigation('ao-khoac'),
-      dropdown: [
-        { label: 'Áo khoác nam', action: () => handleProductNavigation('ao-khoac', 'Nam') },
-        { label: 'Áo khoác nữ', action: () => handleProductNavigation('ao-khoac', 'Nữ') },
-        { label: 'Áo khoác cặp', action: () => handleProductNavigation('ao-khoac', 'Cặp') }
-      ]
-    },
-    {
-      label: 'NAM',
-      action: () => handleProductNavigation('all', 'Nam'),
-      dropdown: [
-        {
-          label: 'ÁO NAM',
-          action: () => handleProductNavigation('all', 'Áo Nam'),
-          submenu: [
-            { label: 'ÁO POLO', action: () => handleProductNavigation('ao-polo') },
-            { label: 'ÁO SƠ MI', action: () => handleProductNavigation('ao-so-mi') },
-            { label: 'ÁO THUN', action: () => handleProductNavigation('ao-thun') },
-            { label: 'ÁO LEN', action: () => handleProductNavigation('ao-len') },
-            { label: 'ÁO KHOÁC', action: () => handleProductNavigation('ao-khoac') },
-            { label: 'ÁO VEST - BLAZER', action: () => handleProductNavigation('ao-vest-blazer') }
-          ]
-        },
-        {
-          label: 'QUẦN NAM',
-          action: () => handleProductNavigation('all', 'Quần Nam'),
-          submenu: [
-            { label: 'Quần jean', action: () => handleProductNavigation('quan-jean') },
-            { label: 'Quần kaki', action: () => handleProductNavigation('quan-kaki') },
-            { label: 'Quần short', action: () => handleProductNavigation('quan-short') },
-            { label: 'Quần tây', action: () => handleProductNavigation('quan-tay') }
-          ]
-        },
-        {
-          label: 'PHỤ KIỆN NAM',
-          action: () => handleProductNavigation('all', 'Phụ kiện Nam'),
-          submenu: [
-            { label: 'Giày dép', action: () => handleProductNavigation('giay-dep') },
-            { label: 'Túi xách', action: () => handleProductNavigation('tui-xach') },
-            { label: 'Đồng hồ', action: () => handleProductNavigation('dong-ho') },
-            { label: 'Mũ nón', action: () => handleProductNavigation('mu-non') }
-          ]
-        }
-      ]
-    },
-    {
-      label: 'NỮ',
-      action: () => handleProductNavigation('all', 'Nữ'),
-      dropdown: [
-        {
-          label: 'ÁO NỮ',
-          action: () => handleProductNavigation('all', 'Áo Nữ'),
-          submenu: [
-            { label: 'Áo thun nữ', action: () => handleProductNavigation('ao-thun-nu') },
-            { label: 'Áo sơ mi nữ', action: () => handleProductNavigation('ao-so-mi-nu') },
-            { label: 'Áo kiểu', action: () => handleProductNavigation('ao-kieu') },
-            { label: 'Áo len nữ', action: () => handleProductNavigation('ao-len-nu') }
-          ]
-        },
-        {
-          label: 'QUẦN NỮ',
-          action: () => handleProductNavigation('all', 'Quần Nữ'),
-          submenu: [
-            { label: 'Quần jean nữ', action: () => handleProductNavigation('quan-jean-nu') },
-            { label: 'Quần tây nữ', action: () => handleProductNavigation('quan-tay-nu') },
-            { label: 'Quần short nữ', action: () => handleProductNavigation('quan-short-nu') },
-            { label: 'Váy', action: () => handleProductNavigation('vay') }
-          ]
-        },
-        {
-          label: 'PHỤ KIỆN NỮ',
-          action: () => handleProductNavigation('all', 'Phụ kiện Nữ'),
-          submenu: [
-            { label: 'Giày cao gót', action: () => handleProductNavigation('giay-cao-got') },
-            { label: 'Túi xách nữ', action: () => handleProductNavigation('tui-xach-nu') },
-            { label: 'Trang sức', action: () => handleProductNavigation('trang-suc') },
-            { label: 'Mũ nón nữ', action: () => handleProductNavigation('mu-non-nu') }
-          ]
-        }
-      ]
-    },
-    {
-      label: 'ĐỒ ĐÔI',
-      action: () => handleProductNavigation('all', 'Đồ đôi'),
-      dropdown: [
-        { label: 'Áo đôi', action: () => handleProductNavigation('ao-doi') },
-        { label: 'Quần đôi', action: () => handleProductNavigation('quan-doi') },
-        { label: 'Set đồ đôi', action: () => handleProductNavigation('set-do-doi') }
-      ]
-    },
-    {
-      label: 'SALE',
-      action: () => handleProductNavigation('all', 'Sale'),
-      dropdown: [
-        { label: 'Sale 30%', action: () => handleProductNavigation('all', 'Sale 30%') },
-        { label: 'Sale 50%', action: () => handleProductNavigation('all', 'Sale 50%') },
-        { label: 'Sale 70%', action: () => handleProductNavigation('all', 'Sale 70%') },
-        { label: 'Liquidation', action: () => handleProductNavigation('all', 'Liquidation') }
-      ]
-    },
-    {
-      label: 'PHỤ KIỆN',
-      action: () => handleProductNavigation('all', 'Phụ kiện'),
-      dropdown: [
-        { label: 'Giày dép', action: () => handleProductNavigation('giay-dep') },
-        { label: 'Túi xách', action: () => handleProductNavigation('tui-xach') },
-        { label: 'Đồng hồ', action: () => handleProductNavigation('dong-ho') },
-        { label: 'Mũ nón', action: () => handleProductNavigation('mu-non') },
-        { label: 'Kính mát', action: () => handleProductNavigation('kinh-mat') }
-      ]
-    },
-    {
+  // Function to fetch children categories
+  const fetchChildrenCategories = async (parentId) => {
+    // Return from cache if already loaded
+    if (childrenCache[parentId]) {
+      return childrenCache[parentId];
+    }
+
+    // Return empty if already loading
+    if (loadingChildren[parentId]) {
+      return [];
+    }
+
+    try {
+      setLoadingChildren(prev => ({ ...prev, [parentId]: true }));
+      const children = await categoryService.getChildrenByParentId(parentId);
+      
+      // Cache the result
+      setChildrenCache(prev => ({ ...prev, [parentId]: children }));
+      
+      return children;
+    } catch (error) {
+      console.error('Failed to fetch children categories:', error);
+      return [];
+    } finally {
+      setLoadingChildren(prev => ({ ...prev, [parentId]: false }));
+    }
+  };
+
+  // Function to handle mouse enter on category item
+  const handleCategoryMouseEnter = async (categoryId, hasChildren) => {
+    if (hasChildren && !childrenCache[categoryId] && !loadingChildren[categoryId]) {
+      await fetchChildrenCategories(categoryId);
+    }
+  };
+
+  // Function to build menu data from categories
+  const buildMenuData = () => {
+    const menuData = [];
+
+    // Add dynamic categories from API
+    categories.forEach(category => {
+      // Only show ACTIVE categories
+      if (category.status === 'ACTIVE') {
+        const menuItem = {
+          id: category.id,
+          label: category.name.toUpperCase(),
+          action: () => handleProductNavigation(category.name.toLowerCase().replace(/\s+/g, '-')),
+          categoryId: category.id,
+          type: category.type,
+          childrenCount: category.childrenCount || 0,
+          hasChildren: (category.childrenCount || 0) > 0
+        };
+
+        menuData.push(menuItem);
+      }
+    });
+
+    // Always add BLOG menu at the end
+    menuData.push({
       label: 'BLOG',
       action: () => navigate('/blog')
+    });
+
+    return menuData;
+  };
+
+  // Function to render dropdown children
+  const renderDropdownChildren = (parentId, level = 1) => {
+    const children = childrenCache[parentId] || [];
+    const isLoading = loadingChildren[parentId];
+
+    if (isLoading) {
+      return (
+        <li className="dropdown-item">
+          <span className="dropdown-link loading">Đang tải...</span>
+        </li>
+      );
     }
-  ];
+
+    if (children.length === 0) {
+      return null;
+    }
+
+    return children.map((child) => (
+      <li 
+        key={child.id} 
+        className="dropdown-item"
+        onMouseEnter={() => handleCategoryMouseEnter(child.id, child.childrenCount > 0)}
+      >
+        <button 
+          onClick={() => handleProductNavigation(child.name.toLowerCase().replace(/\s+/g, '-'))} 
+          className="dropdown-link"
+        >
+          {child.name}
+          {child.type === 'DROPDOWN' && child.childrenCount > 0 && <span className="arrow">›</span>}
+        </button>
+        
+        {/* Level 2 Submenu for DROPDOWN type categories */}
+        {child.type === 'DROPDOWN' && child.childrenCount > 0 && (
+          <div className="submenu">
+            <ul className="submenu-list">
+              {renderDropdownChildren(child.id, level + 1)}
+            </ul>
+          </div>
+        )}
+      </li>
+    ));
+  };
+
+  const menuData = buildMenuData();
 
   return (
     <header className="header">
@@ -193,55 +196,35 @@ const Header = () => {
 
         {/* Navigation Menu */}
         <nav className="nav-menu">
-          <ul className="nav-list">
-            {menuData.map((item, index) => (
-              <li key={index} className="nav-item">
-                <button 
-                  onClick={item.action} 
-                  className="nav-link"
+          {menuLoading ? (
+            <div className="menu-loading">Loading...</div>
+          ) : (
+            <ul className="nav-list">
+              {menuData.map((item, index) => (
+                <li 
+                  key={index} 
+                  className="nav-item"
+                  onMouseEnter={() => item.hasChildren && handleCategoryMouseEnter(item.categoryId, item.hasChildren)}
                 >
-                  {item.label}
-                </button>
-                
-                {/* Level 1 Dropdown */}
-                {item.dropdown && (
-                  <div className="dropdown">
-                    <ul className="dropdown-list">
-                      {item.dropdown.map((dropdownItem, dropdownIndex) => (
-                        <li key={dropdownIndex} className="dropdown-item">
-                          <button 
-                            onClick={dropdownItem.action} 
-                            className="dropdown-link"
-                          >
-                            {dropdownItem.label}
-                            {dropdownItem.submenu && <span className="arrow">›</span>}
-                          </button>
-                          
-                          {/* Level 2 Submenu */}
-                          {dropdownItem.submenu && (
-                            <div className="submenu">
-                              <ul className="submenu-list">
-                                {dropdownItem.submenu.map((submenuItem, submenuIndex) => (
-                                  <li key={submenuIndex} className="submenu-item">
-                                    <button 
-                                      onClick={submenuItem.action} 
-                                      className="submenu-link"
-                                    >
-                                      {submenuItem.label}
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+                  <button 
+                    onClick={item.action} 
+                    className="nav-link"
+                  >
+                    {item.label}
+                  </button>
+                  
+                  {/* Dropdown for categories with children */}
+                  {item.hasChildren && (
+                    <div className="dropdown">
+                      <ul className="dropdown-list">
+                        {renderDropdownChildren(item.categoryId)}
+                      </ul>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </nav>
 
         {/* Right Side - Search, User, Cart */}
@@ -289,8 +272,6 @@ const Header = () => {
           </div>
         </div>
       </div>
-
-
 
       {/* Cart Modal */}
       <CartModal 
