@@ -655,3 +655,25 @@
     font-size: 14px;
   }
 }
+
+/* --- Menu Loading State --- */
+.menu-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* --- Dropdown Loading State --- */
+.dropdown-link.loading {
+  color: #999;
+  font-style: italic;
+  cursor: default;
+}
+
+.dropdown-link.loading:hover {
+  background-color: transparent;
+  color: #999;
+}
