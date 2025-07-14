@@ -43,6 +43,17 @@ const Header = () => {
     navigate(`/products?${params.toString()}`);
   };
 
+  // Function to handle category navigation with proper URL generation
+  const handleCategoryNavigation = async (category) => {
+    try {
+      const slug = category.slug || await categoryService.getSlugByCategoryId(category.id);
+      navigate(`/products?category=${slug}`);
+    } catch (error) {
+      console.error('Error navigating to category:', error);
+      navigate('/products');
+    }
+  };
+
   // Function to handle user icon click
   const handleUserIconClick = () => {
     if (isAuthenticated) {
@@ -119,7 +130,7 @@ const Header = () => {
         const menuItem = {
           id: category.id,
           label: category.name.toUpperCase(),
-          action: () => handleProductNavigation(category.name.toLowerCase().replace(/\s+/g, '-')),
+          action: () => handleCategoryNavigation(category),
           categoryId: category.id,
           type: category.type,
           childrenCount: category.childrenCount || 0,
@@ -163,7 +174,7 @@ const Header = () => {
         onMouseEnter={() => handleCategoryMouseEnter(child.id, child.childrenCount > 0)}
       >
         <button 
-          onClick={() => handleProductNavigation(child.name.toLowerCase().replace(/\s+/g, '-'))} 
+          onClick={() => handleCategoryNavigation(child)} 
           className="dropdown-link"
         >
           {child.name}
