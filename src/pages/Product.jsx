@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import './Product.css';
-import product1 from '../assets/images/product1.webp';
 import ProductModal from '../components/ProductModal';
+import productService from '../services/productService';
+import categoryService from '../services/categoryService';
 
 const Product = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get('category') || 'all';
   const subcategory = searchParams.get('subcategory') || '';
   
+  // State for products and UI
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  
+  // State for dynamic categories
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [categoryDisplayName, setCategoryDisplayName] = useState('Tất cả sản phẩm');
+  const [flattenedCategories, setFlattenedCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  
+  // Filter and UI states
   const [favoriteProducts, setFavoriteProducts] = useState(new Set());
   const [selectedColors, setSelectedColors] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
@@ -17,144 +33,8 @@ const Product = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // Sample product data
-  const products = [
-    {
-      id: 1,
-      name: "Áo Polo KS25SS38C-SCHE",
-      price: 980000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#FFFFFF', '#87CEEB'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 2,
-      name: "Áo Polo Nam Tay Ngắn Form Vừa KS25SS37C",
-      price: 700000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#90EE90', '#FFFFFF'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 3,
-      name: "Áo Polo Nam Tay Ngắn Form Vừa KS25SS36C",
-      price: 980000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#FFFFFF', '#87CEEB'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 4,
-      name: "Áo Polo Nam Tay Ngắn Form Vừa KS25SS35C",
-      price: 700000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#F5F5DC', '#FFFFFF'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 5,
-      name: "Áo Polo Nam Tay Ngắn Form Vừa KS25SS34C",
-      price: 700000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#000080', '#FFFFFF'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 6,
-      name: "Áo Polo Tay Ngắn Form Vừa KS25SS33C",
-      price: 800000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#87CEEB', '#FFFFFF'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 7,
-      name: "Áo Polo Tay Ngắn Form Vừa KS25SS32C",
-      price: 500000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#000080', '#FFFFFF'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 8,
-      name: "Áo Polo Tay Ngắn Form Vừa KS25SS31C",
-      price: 800000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#FFFFFF', '#87CEEB'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 9,
-      name: "Áo Polo Nam Form Vừa Tay Ngắn KS25SS30C",
-      price: 550000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#F5F5DC', '#FFFFFF'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 10,
-      name: "Áo Polo Nam Form Vừa Tay Ngắn KS25SS29C",
-      price: 980000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#FFFFFF', '#87CEEB'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 11,
-      name: "Áo Polo Nam Form Vừa Tay Ngắn KS25SS28C",
-      price: 550000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#FFFFFF', '#87CEEB'],
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 12,
-      name: "Áo Polo Nam Form Vừa Tay Ngắn KS25SS27C",
-      price: 550000,
-      originalPrice: null,
-      discount: null,
-      image: product1,
-      category: "ao-polo",
-      colors: ['#FFFFFF', '#87CEEB'],
-      sizes: ['S', 'M', 'L', 'XL']
-    }
-  ];
-
-  // Available colors and sizes
-  const availableColors = [
+  // Available colors and sizes - these will be populated from backend data
+  const [availableColors, setAvailableColors] = useState([
     { name: 'Trắng', value: '#FFFFFF' },
     { name: 'Black', value: '#000000' },
     { name: 'Navy', value: '#000080' },
@@ -162,18 +42,229 @@ const Product = () => {
     { name: 'Xanh lá', value: '#90EE90' },
     { name: 'Be', value: '#F5F5DC' },
     { name: 'Đỏ', value: '#FF0000' }
-  ];
+  ]);
 
   const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
-  // Filter products based on category and filters
-  const filteredProducts = products.filter(product => {
-    if (category !== 'all' && product.category !== category) return false;
-    if (selectedColors.length > 0 && !product.colors.some(color => selectedColors.includes(color))) return false;
-    if (selectedSizes.length > 0 && !product.sizes.some(size => selectedSizes.includes(size))) return false;
-    if (product.price < priceRange.min || product.price > priceRange.max) return false;
-    return true;
-  });
+  // Fetch categories when component mounts
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // Fetch products when component mounts or filters change
+  useEffect(() => {
+    fetchProducts();
+    updateCategoryDisplayName();
+  }, [category, subcategory, currentPage, sortBy]);
+
+  // Fetch products from backend
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Get category ID from URL category slug
+      const categoryId = await categoryService.getCategoryIdBySlug(category);
+      
+      // Prepare filters
+      const filters = {
+        page: currentPage,
+        size: 12, // Products per page
+        sort: getSortParameters(),
+        categoryId: categoryId
+      };
+
+      // Add price filters if they're not default
+      if (priceRange.min > 0) {
+        filters.minPrice = priceRange.min;
+      }
+      if (priceRange.max < 3000000) {
+        filters.maxPrice = priceRange.max;
+      }
+
+      // Fetch products
+      let result;
+      if (categoryId) {
+        result = await productService.getVisibleProductsByCategory(categoryId, filters);
+      } else {
+        result = await productService.getAllVisibleProducts(filters);
+      }
+
+      if (result.success) {
+        // Transform backend data to frontend format
+        const transformedProducts = result.data.content.map(product => 
+          productService.transformProductData(product)
+        );
+        
+        setProducts(transformedProducts);
+        setTotalProducts(result.data.totalElements);
+        setTotalPages(result.data.totalPages);
+        setCurrentPage(result.data.number);
+      } else {
+        setError(result.message || 'Failed to fetch products');
+        setProducts([]);
+        setTotalProducts(0);
+      }
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError('An error occurred while fetching products');
+      setProducts([]);
+      setTotalProducts(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch available categories for dropdown
+  const fetchCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const rootCategories = await categoryService.getCategoryHierarchy();
+      setAvailableCategories(rootCategories);
+      
+      // Fetch children for categories that have children
+      const categoriesWithChildren = await fetchCategoriesWithChildren(rootCategories);
+      
+      // Flatten categories for the dropdown (including children)
+      const flattened = flattenCategories(categoriesWithChildren);
+      setFlattenedCategories(flattened);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Use fallback categories if API fails
+      setAvailableCategories([]);
+      setFlattenedCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  // Fetch children for categories that have childrenCount > 0
+  const fetchCategoriesWithChildren = async (categories) => {
+    const categoriesWithChildren = [];
+    
+    for (const category of categories) {
+      const categoryWithChildren = { ...category };
+      
+      // Fetch children if category has children count > 0
+      if (category.childrenCount > 0) {
+        try {
+          const children = await categoryService.getChildrenByParentId(category.id);
+          categoryWithChildren.children = children;
+        } catch (error) {
+          console.error(`Error fetching children for category ${category.id}:`, error);
+          categoryWithChildren.children = [];
+        }
+      } else {
+        categoryWithChildren.children = [];
+      }
+      
+      categoriesWithChildren.push(categoryWithChildren);
+    }
+    
+    return categoriesWithChildren;
+  };
+
+  // Helper function to flatten category hierarchy
+  const flattenCategories = (categories, prefix = '') => {
+    let result = [];
+    
+    categories.forEach(category => {
+      // Add current category
+      result.push({
+        ...category,
+        displayName: prefix + category.name,
+        indent: prefix.length > 0
+      });
+      
+      // Add children if they exist (for DROPDOWN type categories)
+      if (category.children && category.children.length > 0) {
+        const childPrefix = prefix + '  '; // Indent with spaces
+        result = result.concat(flattenCategories(category.children, childPrefix));
+      }
+    });
+    
+    return result;
+  };
+
+  // Update category display name
+  const updateCategoryDisplayName = async () => {
+    try {
+      if (!category || category === 'all') {
+        setCategoryDisplayName('Tất cả sản phẩm');
+      } else {
+        const displayName = await categoryService.getCategoryDisplayName(category);
+        setCategoryDisplayName(displayName);
+      }
+    } catch (error) {
+      console.error('Error updating category display name:', error);
+      setCategoryDisplayName('Sản phẩm');
+    }
+  };
+
+  // Convert frontend sort option to backend sort parameters
+  const getSortParameters = () => {
+    switch (sortBy) {
+      case 'price-asc':
+        return ['productVariants.minPrice,asc'];
+      case 'price-desc':
+        return ['productVariants.maxPrice,desc'];
+      case 'name-asc':
+        return ['name,asc'];
+      case 'name-desc':
+        return ['name,desc'];
+      default:
+        return ['createdAt,desc'];
+    }
+  };
+
+  // Filter products based on client-side filters (colors, sizes)
+  const getFilteredProducts = () => {
+    return products.filter(product => {
+      // Color filter
+      if (selectedColors.length > 0) {
+        const hasMatchingColor = product.colors?.some(color => 
+          selectedColors.includes(color.value)
+        );
+        if (!hasMatchingColor) return false;
+      }
+
+      // Size filter
+      if (selectedSizes.length > 0) {
+        const hasMatchingSize = product.sizes?.some(size => 
+          selectedSizes.includes(size)
+        );
+        if (!hasMatchingSize) return false;
+      }
+
+      return true;
+    });
+  };
+
+  const filteredProducts = getFilteredProducts();
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  // Handle sort change
+  const handleSortChange = (newSort) => {
+    setSortBy(newSort);
+    setCurrentPage(0); // Reset to first page when sorting changes
+  };
+
+  // Handle price range change (trigger new API call)
+  const handlePriceRangeChange = (newRange) => {
+    setPriceRange(newRange);
+    setCurrentPage(0);
+    // Debounce the API call
+    clearTimeout(handlePriceRangeChange.timeoutId);
+    handlePriceRangeChange.timeoutId = setTimeout(() => {
+      fetchProducts();
+    }, 500);
+  };
 
   const toggleFavorite = (productId) => {
     const newFavorites = new Set(favoriteProducts);
@@ -216,16 +307,54 @@ const Product = () => {
   };
 
   const getCategoryTitle = () => {
-    const categoryMap = {
-      'ao-polo': 'Áo Polo',
-      'ao-so-mi': 'Áo Sơ Mi',
-      'ao-thun': 'Áo Thun',
-      'ao-len': 'Áo Len',
-      'ao-khoac': 'Áo Khoác',
-      'ao-vest-blazer': 'Áo Vest - Blazer',
-      'all': 'Tất cả sản phẩm'
-    };
-    return categoryMap[category] || 'Sản phẩm';
+    return categoryDisplayName;
+  };
+
+  // Render pagination
+  const renderPagination = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(0, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="pagination">
+        <button 
+          className="page-btn" 
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 0}
+        >
+          ‹
+        </button>
+        
+        {pageNumbers.map(pageNum => (
+          <button
+            key={pageNum}
+            className={`page-btn ${currentPage === pageNum ? 'active' : ''}`}
+            onClick={() => handlePageChange(pageNum)}
+          >
+            {pageNum + 1}
+          </button>
+        ))}
+        
+        <button 
+          className="page-btn"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages - 1}
+        >
+          ›
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -247,13 +376,25 @@ const Product = () => {
             <div className="filter-group">
               <h3 className="filter-title">Danh mục</h3>
               <div className="filter-dropdown">
-                <select className="category-select" value={category}>
+                <select 
+                  className="category-select" 
+                  value={category}
+                  onChange={(e) => {
+                    const newCategory = e.target.value;
+                    setSearchParams({ category: newCategory });
+                  }}
+                  disabled={categoriesLoading}
+                >
                   <option value="all">Tất cả</option>
-                  <option value="ao-polo">Áo Polo</option>
-                  <option value="ao-so-mi">Áo Sơ Mi</option>
-                  <option value="ao-thun">Áo Thun</option>
-                  <option value="ao-len">Áo Len</option>
-                  <option value="ao-khoac">Áo Khoác</option>
+                  {categoriesLoading ? (
+                    <option disabled>Đang tải danh mục...</option>
+                  ) : (
+                    flattenedCategories.map((cat) => (
+                      <option key={cat.id} value={cat.slug || cat.id}>
+                        {cat.displayName}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
             </div>
@@ -293,7 +434,7 @@ const Product = () => {
                     max="3000000"
                     step="50000"
                     value={priceRange.max}
-                    onChange={(e) => setPriceRange({...priceRange, max: parseInt(e.target.value)})}
+                    onChange={(e) => handlePriceRangeChange({...priceRange, max: parseInt(e.target.value)})}
                     className="price-slider"
                   />
                 </div>
@@ -303,7 +444,7 @@ const Product = () => {
                     <input
                       type="number"
                       value={priceRange.min}
-                      onChange={(e) => setPriceRange({...priceRange, min: parseInt(e.target.value) || 0})}
+                      onChange={(e) => handlePriceRangeChange({...priceRange, min: parseInt(e.target.value) || 0})}
                       className="price-input"
                     />
                     <span className="currency">đ</span>
@@ -313,7 +454,7 @@ const Product = () => {
                     <input
                       type="number"
                       value={priceRange.max}
-                      onChange={(e) => setPriceRange({...priceRange, max: parseInt(e.target.value) || 3000000})}
+                      onChange={(e) => handlePriceRangeChange({...priceRange, max: parseInt(e.target.value) || 3000000})}
                       className="price-input"
                     />
                     <span className="currency">đ</span>
@@ -343,11 +484,14 @@ const Product = () => {
           <main className="product-main">
             {/* Header with count and sort */}
             <div className="product-header">
-              <h2 className="product-count">Có {filteredProducts.length} sản phẩm</h2>
+              <h2 className="product-count">
+                {loading ? 'Đang tải...' : `Có ${filteredProducts.length} sản phẩm`}
+              </h2>
               <select 
                 className="sort-select" 
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => handleSortChange(e.target.value)}
+                disabled={loading}
               >
                 <option value="default">Sắp xếp theo</option>
                 <option value="price-asc">Giá: Thấp → Cao</option>
@@ -357,67 +501,102 @@ const Product = () => {
               </select>
             </div>
 
-            {/* Products Grid */}
-            <div className="products-grid">
-              {filteredProducts.map((product) => (
-                <div key={product.id} className="product-card">
-                  {/* Product Image - Clickable */}
-                  <Link to={`/product/${product.id}`} className="product-image-container">
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      className="product-image"
-                    />
-                    {product.discount && (
-                      <span className="discount-badge">-{product.discount}%</span>
-                    )}
-                  </Link>
+            {/* Loading State */}
+            {loading && (
+              <div className="loading-state">
+                <p>Đang tải sản phẩm...</p>
+              </div>
+            )}
 
-                  {/* Product Info */}
-                  <div className="product-info">
-                    <Link to={`/product/${product.id}`} className="product-name-link">
-                      <h3 className="product-name">{product.name}</h3>
+            {/* Error State */}
+            {error && (
+              <div className="error-state">
+                <p>Lỗi: {error}</p>
+                <button onClick={fetchProducts}>Thử lại</button>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loading && !error && filteredProducts.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">📦</div>
+                <h3>Hiện tại chưa có sản phẩm nào</h3>
+                <p>Không tìm thấy sản phẩm phù hợp với danh mục hoặc bộ lọc đã chọn.</p>
+                <div className="empty-actions">
+                  <Link to="/products?category=all" className="browse-all-btn">
+                    Xem tất cả sản phẩm
+                  </Link>
+                  <button onClick={() => {
+                    setSelectedColors([]);
+                    setSelectedSizes([]);
+                    setPriceRange({ min: 0, max: 3000000 });
+                    setSortBy('default');
+                  }} className="clear-filters-btn">
+                    Xóa bộ lọc
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Products Grid */}
+            {!loading && !error && filteredProducts.length > 0 && (
+              <div className="products-grid">
+                {filteredProducts.map((product) => (
+                  <div key={product.id} className="product-card">
+                    {/* Product Image - Clickable */}
+                    <Link to={`/product/${product.id}`} className="product-image-container">
+                      <img 
+                        src={product.image} 
+                        alt={product.name}
+                        className="product-image"
+                        onError={(e) => {
+                          e.target.src = '/images/product-placeholder.jpg';
+                        }}
+                      />
+                      {product.discount && (
+                        <span className="discount-badge">-{product.discount}%</span>
+                      )}
                     </Link>
 
-                    {/* Price and Actions */}
-                    <div className="price-actions-container">
-                      <div className="product-price">
-                        <span className="current-price">{formatPrice(product.price)}</span>
-                        {product.originalPrice && (
-                          <span className="original-price">{formatPrice(product.originalPrice)}</span>
-                        )}
-                      </div>
-                      
-                      {/* Action Buttons */}
-                      <div className="product-actions">
-                        <button 
-                          className={`action-btn favorite-btn ${favoriteProducts.has(product.id) ? 'active' : ''}`}
-                          onClick={() => toggleFavorite(product.id)}
-                        >
-                          {favoriteProducts.has(product.id) ? '♥' : '♡'}
-                        </button>
-                        <button 
-                          className="action-btn cart-btn"
-                          onClick={() => handleOpenModal(product)}
-                        >
-                          🛒
-                        </button>
+                    {/* Product Info */}
+                    <div className="product-info">
+                      <Link to={`/product/${product.id}`} className="product-name-link">
+                        <h3 className="product-name">{product.name}</h3>
+                      </Link>
+
+                      {/* Price and Actions */}
+                      <div className="price-actions-container">
+                        <div className="product-price">
+                          <span className="current-price">{formatPrice(product.price)}</span>
+                          {product.originalPrice && (
+                            <span className="original-price">{formatPrice(product.originalPrice)}</span>
+                          )}
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="product-actions">
+                          <button 
+                            className={`action-btn favorite-btn ${favoriteProducts.has(product.id) ? 'active' : ''}`}
+                            onClick={() => toggleFavorite(product.id)}
+                          >
+                            {favoriteProducts.has(product.id) ? '♥' : '♡'}
+                          </button>
+                          <button 
+                            className="action-btn cart-btn"
+                            onClick={() => handleOpenModal(product)}
+                          >
+                            🛒
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Pagination */}
-            <div className="pagination">
-              <button className="page-btn">‹</button>
-              <button className="page-btn active">1</button>
-              <button className="page-btn">2</button>
-              <button className="page-btn">3</button>
-              <button className="page-btn">4</button>
-              <button className="page-btn">›</button>
-            </div>
+            {!loading && !error && totalPages > 1 && renderPagination()}
           </main>
         </div>
 
