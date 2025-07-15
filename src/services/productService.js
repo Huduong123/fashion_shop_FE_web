@@ -1,40 +1,6 @@
 import api from './api';
+import colorService from './colorService';
 
-// Color mapping for Vietnamese color names to hex codes
-const COLOR_NAME_MAPPING = {
-  // Vietnamese color names from backend
-  'Đen': '#000000',
-  'Trắng': '#FFFFFF',
-  'Xanh Navy': '#000080',
-  'Xanh': '#0000FF',
-  'Xanh dương': '#87CEEB',
-  'Xanh lá': '#90EE90',
-  'Đỏ': '#FF0000',
-  'Vàng': '#FFFF00',
-  'Hồng': '#FFC0CB',
-  'Tím': '#800080',
-  'Cam': '#FFA500',
-  'Nâu': '#A52A2A',
-  'Xám': '#808080',
-  'Be': '#F5F5DC',
-  'Kem': '#FFFDD0',
-  
-  // English color names (fallback)
-  'Black': '#000000',
-  'White': '#FFFFFF',
-  'Red': '#FF0000',
-  'Blue': '#0000FF',
-  'Green': '#008000',
-  'Yellow': '#FFFF00',
-  'Purple': '#800080',
-  'Orange': '#FFA500',
-  'Pink': '#FFC0CB',
-  'Brown': '#A52A2A',
-  'Gray': '#808080',
-  'Grey': '#808080',
-  'Navy': '#000080',
-  'Beige': '#F5F5DC'
-};
 
 const productService = {
   // Get all visible products with optional filters and pagination
@@ -135,33 +101,7 @@ const productService = {
       };
     }
   },
-
-  // Map color name to hex value
-  getColorHexCode: (colorName) => {
-    if (!colorName) return '#CCCCCC'; // Default gray
-    
-    // Try exact match first
-    const exactMatch = COLOR_NAME_MAPPING[colorName];
-    if (exactMatch) return exactMatch;
-    
-    // Try case-insensitive match
-    const normalizedColorName = colorName.toLowerCase();
-    for (const [name, hex] of Object.entries(COLOR_NAME_MAPPING)) {
-      if (name.toLowerCase() === normalizedColorName) {
-        return hex;
-      }
-    }
-    
-    // Try partial match for compound color names
-    for (const [name, hex] of Object.entries(COLOR_NAME_MAPPING)) {
-      if (normalizedColorName.includes(name.toLowerCase()) || name.toLowerCase().includes(normalizedColorName)) {
-        return hex;
-      }
-    }
-    
-    // Default fallback
-    return '#CCCCCC';
-  },
+ 
 
   // Transform backend product data to frontend format
   transformProductData: (backendProduct) => {
@@ -192,7 +132,7 @@ const productService = {
             colorMap.set(variant.colorId, {
               id: variant.colorId,
               name: variant.colorName,
-              value: productService.getColorHexCode(variant.colorName)
+              value: colorService.getColorHexCode(variant.colorName)
             });
           }
         });
