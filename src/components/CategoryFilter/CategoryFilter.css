@@ -1,0 +1,157 @@
+/* --- Giao diện bộ lọc danh mục chuyên nghiệp --- */
+
+/* Tiêu đề chính "Danh mục" */
+.filter-group .filter-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.filter-title h3 { margin: 0; font-size: 1rem; font-weight: 600; color: #1a1a1a; }
+.filter-title .toggle-arrow { transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1); }
+.filter-title .toggle-arrow.expanded { transform: rotate(180deg); }
+
+/* Danh sách các danh mục */
+.category-filter-list ul { list-style: none; padding: 0; margin: 0; }
+
+/* Styling cho từng dòng mục cha */
+.category-item { margin-bottom: 5px; }
+
+.category-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 5px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.category-item-row:hover { background-color: #f7f8fa; }
+
+/* Link bên trong mục cha */
+.category-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+    flex-grow: 1;
+    cursor: pointer;
+    min-width: 0;
+}
+
+/* --- PHẦN SỬA LỖI CHO MỤC CON --- */
+
+/* Thẻ <li> của mục con - chỉ dùng để định vị */
+.subcategory-item {
+    margin-bottom: 5px;
+}
+
+/* Thẻ <a> của mục con - nhận tất cả style để trải dài */
+.subcategory-item > a {
+    display: flex; /* Quan trọng: Biến link thành block-level flex container */
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+    width: 100%; /* Đảm bảo link chiếm hết chiều rộng của li */
+    padding: 8px 5px; /* Di chuyển padding vào đây */
+    border-radius: 6px; /* Di chuyển bo góc vào đây */
+    transition: background-color 0.2s ease-in-out;
+}
+
+.subcategory-item > a:hover {
+    background-color: #f7f8fa; /* Di chuyển hover vào đây */
+}
+/* --- KẾT THÚC PHẦN SỬA LỖI --- */
+
+
+/* Icon radio button */
+.radio-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 50%;
+    margin-right: 12px;
+    flex-shrink: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Tên danh mục (áp dụng cho cả cha và con) */
+.category-name {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Nút [+] và [-] */
+.expand-toggle {
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 28px;
+    text-align: center;
+    flex-shrink: 0;
+    margin-left: 10px;
+    color: #6b7280;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.expand-toggle:hover { background-color: #e5e7eb; color: #111827; }
+
+/* Danh sách mục con (được thụt vào) */
+.subcategory-list {
+    list-style: none;
+    padding-left: 28px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+
+/* --- TRẠNG THÁI ACTIVE (Đã sửa để áp dụng đúng) --- */
+.category-item.active > .category-item-row,
+.subcategory-item.active > a { /* Áp dụng active cho link của mục con */
+    background-color: #f0f5ff;
+}
+
+.category-item.active .category-link, /* Target link bên trong mục cha */
+.subcategory-item.active > a {
+    font-weight: 600;
+    color: #2563eb;
+}
+
+.category-item.active .radio-icon,
+.subcategory-item.active .radio-icon {
+    border-color: #2563eb;
+    background-color: #2563eb;
+}
+
+/* Chấm tròn trắng bên trong radio button khi active */
+.radio-icon::after {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: white;
+    transform: scale(0);
+    transition: transform 0.2s ease-in-out;
+}
+
+.category-item.active .radio-icon::after,
+.subcategory-item.active .radio-icon::after {
+    transform: scale(1);
+}
