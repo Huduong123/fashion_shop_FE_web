@@ -46,7 +46,7 @@
 /* Main Layout */
 .product-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 40px;
   align-items: start;
 }
@@ -695,7 +695,7 @@
 /* Responsive Design */
 @media (max-width: 1200px) {
   .product-layout {
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 2600px 1fr;
     gap: 30px;
   }
   
