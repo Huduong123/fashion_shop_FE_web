@@ -1,312 +1,290 @@
-import React, { useState } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import './ProductDetail.css';
-import product1 from '../assets/images/product1.webp';
+
+// Services & Components
+import productService from '../services/productService';
+import colorService from '../services/colorService';
 import FeaturesSection from '../components/FeaturesSection/FeaturesSection';
 
 const ProductDetail = () => {
+  // --- STATE MANAGEMENT ---
   const { productId } = useParams();
-  const [searchParams] = useSearchParams();
-  
+  const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedSizeInfo, setSelectedSizeInfo] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedColor, setSelectedColor] = useState('#8B4513'); // Brown
-  const [selectedSize, setSelectedSize] = useState('XL');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const [favoriteProducts, setFavoriteProducts] = useState(new Set());
 
-  // Sample product data
-  const product = {
-    id: 1,
-    name: "Áo Polo KS25SS38C-SCHE",
-    sku: "KS25SS38C-SCHE",
-    price: 980000,
-    originalPrice: null,
-    brand: "JOHN HENRY",
-    images: [product1, product1, product1, product1, product1],
-    colors: [
-      { name: 'BROWN', value: '#8B4513' },
-      { name: 'BLUE', value: '#87CEEB' }
-    ],
-    sizes: ['S', 'M', 'L', 'XL', '2XL', '3XL'],
-    description: "Chất liệu 100% polyester với độ bền cao và có khả năng cản gió - lý tưởng cho thời tiết se lạnh hoặc những ngày di chuyển nhiều. Thiết kế tối giản với có dung hiện đại, form áo thoải mái cùng khoá kéo tiện lợi - dễ dàng kết hợp với sơ mi, áo thun hay áo polo. Gam màu trung tính để phối cùng quần tây hoặc jeans - hoàn hảo cho phong cách công sở lịch sự mà vẫn thoải mái.",
-    category: "ao-polo"
+  // --- USE EFFECTS ---
+
+  // Effect #1: Lấy dữ liệu sản phẩm chính khi ID thay đổi
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    const fetchProductDetails = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        setProduct(null);
+        setRelatedProducts([]);
+
+        const result = await productService.getProductById(productId);
+
+        if (result.success && result.data) {
+          const productData = result.data;
+          setProduct(productData);
+
+          // Tự động chọn màu và size mặc định
+          if (productData.productVariants && productData.productVariants.length > 0) {
+            const firstVariant = productData.productVariants[0];
+            setSelectedVariant(firstVariant);
+
+            if (firstVariant.sizes && firstVariant.sizes.length > 0) {
+              const firstAvailableSize = firstVariant.sizes.find(s => s.available) || firstVariant.sizes[0];
+              setSelectedSizeInfo(firstAvailableSize);
+              setQuantity(1); // Reset số lượng về 1 khi có sản phẩm mới
+            }
+          }
+        } else {
+          setError(result.message || 'Không tìm thấy sản phẩm.');
+        }
+      } catch (err) {
+        setError('Đã xảy ra lỗi khi kết nối đến máy chủ.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetails();
+  }, [productId]);
+
+  // Effect #2: Lấy sản phẩm liên quan sau khi đã có sản phẩm chính
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      if (product && product.categoryId) {
+        try {
+          const filters = {
+            categoryId: product.categoryId,
+            page: 0,
+            size: 5,
+          };
+          const result = await productService.getAllVisibleProducts(filters);
+          if (result.success && result.data.content) {
+            const filteredRelated = result.data.content
+              .map(p => productService.transformProductData(p))
+              .filter(p => p.id !== product.id)
+              .slice(0, 4);
+            setRelatedProducts(filteredRelated);
+          }
+        } catch (err) {
+          console.error("Lỗi khi tải sản phẩm liên quan:", err);
+        }
+      }
+    };
+
+    fetchRelatedProducts();
+  }, [product]);
+
+  // --- EVENT HANDLERS ---
+
+  const handleColorSelect = (variant) => {
+    setSelectedVariant(variant);
+    if (variant.sizes?.length > 0) {
+      const firstAvailableSize = variant.sizes.find(s => s.available) || variant.sizes[0];
+      setSelectedSizeInfo(firstAvailableSize);
+      setQuantity(1); // Reset số lượng khi đổi màu
+    }
+    setSelectedImage(0);
   };
 
-  // Related products
-  const relatedProducts = [
-    {
-      id: 2,
-      name: "Áo Khoác Nam Thời Trang JK25SS01T-PA",
-      price: 1200000,
-      image: product1
-    },
-    {
-      id: 3,
-      name: "Áo Khoác Nam Thời Trang JK25FH02P-CT",
-      price: 1500000,
-      image: product1
-    },
-    {
-      id: 4,
-      name: "Áo Khoác Phao Nam Tính JK24FH08P-PA",
-      price: 1800000,
-      image: product1
-    },
-    {
-      id: 5,
-      name: "Áo Khoác Nam Phong Cách JK24FH07P-CT",
-      price: 1600000,
-      image: product1
-    }
-  ];
-
-  const toggleFavorite = (productId) => {
-    const newFavorites = new Set(favoriteProducts);
-    if (newFavorites.has(productId)) {
-      newFavorites.delete(productId);
-    } else {
-      newFavorites.add(productId);
-    }
-    setFavoriteProducts(newFavorites);
-  };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
+  const handleSizeSelect = (size) => {
+    setSelectedSizeInfo(size);
+    setQuantity(1); // Reset số lượng khi đổi size
   };
 
   const handleQuantityChange = (change) => {
-    const newQuantity = quantity + change;
-    if (newQuantity >= 1) {
-      setQuantity(newQuantity);
-    }
+    // Số lượng tối đa cho phép mua là 10 hoặc số lượng trong kho, chọn số nhỏ hơn
+    const stockQuantity = selectedSizeInfo?.quantity || 0;
+    const purchaseLimit = 10;
+    const maxQuantity = Math.min(stockQuantity, purchaseLimit);
+
+    setQuantity(prevQuantity => {
+      const newQuantity = prevQuantity + change;
+      // Giới hạn số lượng trong khoảng từ 1 đến maxQuantity
+      if (newQuantity >= 1 && newQuantity <= maxQuantity) {
+        return newQuantity;
+      }
+      return prevQuantity; // Giữ nguyên giá trị nếu vượt giới hạn
+    });
   };
 
-  const getCategoryTitle = () => {
-    const categoryMap = {
-      'ao-polo': 'Áo Polo',
-      'ao-so-mi': 'Áo Sơ Mi',
-      'ao-thun': 'Áo Thun',
-      'ao-len': 'Áo Len',
-      'ao-khoac': 'Áo Khoác'
-    };
-    return categoryMap[product.category] || 'Sản phẩm';
+  const toggleFavorite = (id) => {
+    const newFavorites = new Set(favoriteProducts);
+    newFavorites.has(id) ? newFavorites.delete(id) : newFavorites.add(id);
+    setFavoriteProducts(newFavorites);
   };
+
+  // --- HELPERS ---
+  const formatPrice = (price) => {
+    if (price === null || price === undefined) return 'Liên hệ';
+    return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
+  };
+  const currentImages = selectedVariant?.images?.sort((a, b) => a.displayOrder - b.displayOrder).map(img => img.imageUrl) ?? [];
+
+  // --- RENDER LOGIC ---
+  if (loading) return <div className="loading-state-fullpage">Đang tải sản phẩm...</div>;
+  if (error) return <div className="error-state-fullpage">Lỗi: {error}</div>;
+  if (!product) return <div className="empty-state-fullpage">Không tìm thấy sản phẩm.</div>;
+
+  // Xác định số lượng tối đa có thể mua cho lần render này
+  const stockQuantity = selectedSizeInfo?.quantity || 0;
+  const purchaseLimit = 10;
+  const maxAllowedQuantity = Math.min(stockQuantity, purchaseLimit);
 
   return (
     <div className="product-detail-page">
       <div className="product-detail-container">
-        {/* Breadcrumb */}
         <nav className="detail-breadcrumb">
           <Link to="/" className="detail-breadcrumb-link">Trang chủ</Link>
           <span className="detail-breadcrumb-separator">/</span>
-          <Link to={`/products?category=${product.category}`} className="detail-breadcrumb-link">
-            {getCategoryTitle()}
-          </Link>
+          <Link to={`/products?category=${product.categoryName}`} className="detail-breadcrumb-link">{product.categoryName}</Link>
           <span className="detail-breadcrumb-separator">/</span>
           <span className="detail-breadcrumb-current">{product.name}</span>
         </nav>
 
-        {/* Product Detail Section */}
         <div className="product-detail-layout">
-          {/* Product Gallery */}
           <div className="product-gallery">
-            {/* Thumbnail Images */}
             <div className="gallery-thumbnails">
-              {product.images.map((image, index) => (
-                <button
-                  key={index}
-                  className={`thumbnail-btn ${selectedImage === index ? 'active' : ''}`}
-                  onClick={() => setSelectedImage(index)}
-                >
-                  <img src={image} alt={`${product.name} ${index + 1}`} />
+              {currentImages.map((image, index) => (
+                <button key={index} className={`thumbnail-btn ${selectedImage === index ? 'active' : ''}`} onClick={() => setSelectedImage(index)}>
+                  <img src={image} alt={`${product.name} ${index + 1}`} onError={(e) => { e.target.src = '/images/product-placeholder.jpg'; }} />
                 </button>
               ))}
             </div>
-
-            {/* Main Image */}
             <div className="gallery-main">
-              <img 
-                src={product.images[selectedImage]} 
-                alt={product.name}
-                className="main-product-image"
-              />
-              <button className="gallery-prev">‹</button>
-              <button className="gallery-next">›</button>
+              <img src={currentImages[selectedImage] || '/images/product-placeholder.jpg'} alt={product.name} className="main-product-image" />
             </div>
           </div>
-
-          {/* Product Info */}
           <div className="product-detail-info">
-            {/* Product Name */}
             <h1 className="product-detail-name">{product.name}</h1>
-            <p className="product-sku">SKU: {product.sku}</p>
-
-            {/* Price */}
+            <p className="product-sku">Mã sản phẩm: {product.id}</p>
             <div className="product-detail-price">
-              <span className="detail-current-price">{formatPrice(product.price)}</span>
-              {product.originalPrice && (
-                <span className="detail-original-price">{formatPrice(product.originalPrice)}</span>
-              )}
+              <span className="detail-current-price">{formatPrice(selectedSizeInfo?.price)}</span>
             </div>
-
-            {/* Color Selection */}
             <div className="product-options">
               <div className="option-group">
-                <label className="option-label">Color: <strong>{selectedColor === '#8B4513' ? 'BROWN' : 'BLUE'}</strong></label>
+                <label className="option-label">Màu sắc:</label>
                 <div className="color-options">
-                  {product.colors.map((color) => (
+                  {product.productVariants.map((variant) => (
                     <button
-                      key={color.value}
-                      className={`color-option ${selectedColor === color.value ? 'active' : ''}`}
-                      style={{ backgroundColor: color.value }}
-                      onClick={() => setSelectedColor(color.value)}
-                      title={color.name}
-                    />
+                      key={variant.id}
+                      className={`color-swatch-btn ${selectedVariant?.id === variant.id ? 'active' : ''}`}
+                      onClick={() => handleColorSelect(variant)}
+                      title={variant.colorName}
+                    >
+                      <span
+                        className="color-swatch"
+                        style={{ backgroundColor: colorService.getColorHexCode(variant.colorName) }}
+                      ></span>
+                      <span className="color-name-text">{variant.colorName}</span>
+                    </button>
                   ))}
                 </div>
               </div>
 
-              {/* Size Selection */}
               <div className="option-group">
                 <label className="option-label">Kích thước:</label>
                 <div className="size-options">
-                  {product.sizes.map((size) => (
-                    <button
-                      key={size}
-                      className={`size-option ${selectedSize === size ? 'active' : ''}`}
-                      onClick={() => setSelectedSize(size)}
-                    >
-                      {size}
+                  {selectedVariant?.sizes.map((size) => (
+                    <button key={size.id} className={`size-option ${selectedSizeInfo?.id === size.id ? 'active' : ''}`} onClick={() => handleSizeSelect(size)} disabled={!size.available}>
+                      {size.sizeName}
                     </button>
                   ))}
                 </div>
                 <button className="size-guide-btn">📏 Hướng dẫn tính size</button>
               </div>
 
-              {/* Quantity */}
               <div className="option-group">
                 <label className="option-label">Số lượng:</label>
                 <div className="quantity-selector">
-                  <button 
+                  <button
                     className="quantity-btn"
                     onClick={() => handleQuantityChange(-1)}
+                    disabled={quantity <= 1}
                   >
                     -
                   </button>
                   <span className="quantity-value">{quantity}</span>
-                  <button 
+                  <button
                     className="quantity-btn"
                     onClick={() => handleQuantityChange(1)}
+                    disabled={quantity >= maxAllowedQuantity}
                   >
                     +
                   </button>
                 </div>
+                {stockQuantity > 0 &&
+                  <span className="stock-info">
+                    {stockQuantity} sản phẩm có sẵn
+                  </span>
+                }
               </div>
             </div>
-
-            {/* Action Buttons */}
             <div className="product-actions-detail">
-              <button className="btn-buy-now">MUA NGAY</button>
-              <button className="btn-add-cart">THÊM VÀO GIỎ</button>
+              <button className="btn-buy-now" disabled={!selectedSizeInfo?.available}>MUA NGAY</button>
+              <button className="btn-add-cart" disabled={!selectedSizeInfo?.available}>THÊM VÀO GIỎ</button>
             </div>
-
-            <button className="btn-share">
-              <span className="share-icon">↗</span>
-              CHIA SẺ
-            </button>
           </div>
         </div>
 
-        {/* Features Section */}
         <FeaturesSection />
 
-        {/* Product Tabs */}
         <div className="product-tabs">
           <div className="tab-buttons">
-            <button 
-              className={`tab-btn ${activeTab === 'description' ? 'active' : ''}`}
-              onClick={() => setActiveTab('description')}
-            >
-              MÔ TẢ SẢN PHẨM
-            </button>
-            <button 
-              className={`tab-btn ${activeTab === 'policy' ? 'active' : ''}`}
-              onClick={() => setActiveTab('policy')}
-            >
-              CHÍNH SÁCH ĐỔI HÀNG
-            </button>
+            <button className={`tab-btn ${activeTab === 'description' ? 'active' : ''}`} onClick={() => setActiveTab('description')}>MÔ TẢ SẢN PHẨM</button>
+            <button className={`tab-btn ${activeTab === 'policy' ? 'active' : ''}`} onClick={() => setActiveTab('policy')}>CHÍNH SÁCH ĐỔI HÀNG</button>
           </div>
-
           <div className="tab-content">
-            {activeTab === 'description' && (
-              <div className="tab-panel">
-                <p>{product.description}</p>
-              </div>
-            )}
-            {activeTab === 'policy' && (
-              <div className="tab-panel">
-                <p>Thông tin về chính sách đổi hàng sẽ được cập nhật tại đây.</p>
-              </div>
-            )}
+            {activeTab === 'description' && <div className="tab-panel"><p>{product.description || "Chưa có mô tả cho sản phẩm này."}</p></div>}
+            {activeTab === 'policy' && <div className="tab-panel"><p>Thông tin về chính sách đổi hàng sẽ được cập nhật tại đây.</p></div>}
           </div>
         </div>
 
-        {/* Related Products */}
-        <div className="related-products-section">
-          <h2 className="related-title">SẢN PHẨM LIÊN QUAN</h2>
-          <div className="related-products-grid">
-            {relatedProducts.map((relatedProduct) => (
-              <Link 
-                key={relatedProduct.id} 
-                to={`/product/${relatedProduct.id}`}
-                className="related-product-card"
-              >
-                <div className="related-image-container">
-                  <img 
-                    src={relatedProduct.image} 
-                    alt={relatedProduct.name}
-                    className="related-product-image"
-                  />
-                </div>
-                <div className="related-product-info">
-                  <h3 className="related-product-name">{relatedProduct.name}</h3>
-                  <div className="related-price-actions">
-                    <span className="related-price">{formatPrice(relatedProduct.price)}</span>
-                    <div className="related-actions">
-                      <button 
-                        className={`related-action-btn favorite ${favoriteProducts.has(relatedProduct.id) ? 'active' : ''}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          toggleFavorite(relatedProduct.id);
-                        }}
-                      >
-                        {favoriteProducts.has(relatedProduct.id) ? '♥' : '♡'}
-                      </button>
-                      <button 
-                        className="related-action-btn cart"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        🛒
-                      </button>
+        {relatedProducts.length > 0 && (
+          <div className="related-products-section">
+            <h2 className="related-title">SẢN PHẨM LIÊN QUAN</h2>
+            <div className="related-products-grid">
+              {relatedProducts.map((relatedProd) => (
+                <Link key={relatedProd.id} to={`/product/${relatedProd.id}`} className="related-product-card">
+                  <div className="related-image-container">
+                    <img src={relatedProd.image} alt={relatedProd.name} className="related-product-image" onError={(e) => { e.target.src = '/images/product-placeholder.jpg'; }} />
+                  </div>
+                  <div className="related-product-info">
+                    <h3 className="related-product-name">{relatedProd.name}</h3>
+                    <div className="related-price-actions">
+                      <span className="related-price">{formatPrice(relatedProd.price)}</span>
+                      <div className="related-actions">
+                        <button className={`related-action-btn favorite ${favoriteProducts.has(relatedProd.id) ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); toggleFavorite(relatedProd.id); }}>
+                          {favoriteProducts.has(relatedProd.id) ? '♥' : '♡'}
+                        </button>
+                        <button className="related-action-btn cart" onClick={(e) => e.preventDefault()}>🛒</button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Contact Icons */}
-        <div className="detail-contact-icons">
-          <a href="tel:+84906954368" className="detail-contact-icon phone">📞</a>
-          <a href="#" className="detail-contact-icon messenger">💬</a>
-          <a href="#" className="detail-contact-icon zalo">💬</a>
-          <button className="detail-contact-icon back-top" onClick={() => window.scrollTo(0, 0)}>↑</button>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default ProductDetail; 
+export default ProductDetail;

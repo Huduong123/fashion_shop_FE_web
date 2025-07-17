@@ -204,7 +204,9 @@
 /* Color Options */
 .color-options {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 12px; /* Khoảng cách giữa các nút */
+  align-items: center;
 }
 
 .color-option {
@@ -225,7 +227,53 @@
 .color-option:hover {
   transform: scale(1.05);
 }
+.color-swatch-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1.5px solid #333333;
+  color: #333333;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-weight: 500;
+}
 
+/* Hiệu ứng khi di chuột qua nút */
+.color-swatch-btn:hover {
+  border-color: #000000; /* Có thể làm viền đậm hơn khi hover */
+  transform: translateY(-1px);
+}
+
+/* ---- TRẠNG THÁI ACTIVE MỚI ---- */
+.color-swatch-btn.active {
+  /* Giữ nguyên nền trắng và chữ đen */
+  background-color: #ffffff;
+  color: #333333;
+
+  /* CHỈ THAY ĐỔI VIỀN VÀ THÊM SHADOW */
+  border-color: #dc3545; /* Viền màu đỏ nổi bật */
+  border-width: 2px; /* Viền dày hơn một chút */
+  box-shadow: 0 0 8px rgba(220, 53, 69, 0.4); /* Hiệu ứng tỏa sáng màu đỏ */
+  
+  /* Giữ lại transform nếu muốn nút được "nâng" lên */
+  transform: translateY(-2px);
+}
+
+/* Vòng tròn nhỏ hiển thị màu sắc thực tế */
+.color-swatch {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid #cccccc;
+}
+.color-name-text {
+  font-size: 14px;
+  /* Màu chữ đã được định nghĩa trong .color-swatch-btn */
+}
 /* Size Options */
 .size-options {
   display: flex;
@@ -740,3 +788,18 @@
     margin-bottom: 20px;
   }
 } 
+
+/* Thêm vào cuối file ProductDetail.css */
+
+/* Kiểu cho thông báo về số lượng tồn kho */
+.stock-info {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px; /* Thêm một chút khoảng cách với thanh số lượng */
+}
+
+/* Kiểu cho thông báo khi đạt giới hạn */
+.stock-info.limit-reached {
+  color: #dc3545; /* Màu đỏ để cảnh báo */
+  font-weight: 500; /* In đậm chữ */
+}
