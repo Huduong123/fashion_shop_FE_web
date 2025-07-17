@@ -40,8 +40,8 @@ const Product = () => {
 
   // State cho modal và sản phẩm yêu thích
   const [favoriteProducts, setFavoriteProducts] = useState(new Set());
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+    const [selectedProductId, setSelectedProductId] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Tạo giá trị đã được "debounce" cho khoảng giá với độ trễ 500ms
   const debouncedPriceRange = useDebounce(priceRange, 500);
@@ -195,15 +195,14 @@ const Product = () => {
     });
   };
 
-  const handleOpenModal = (product) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedProduct(null);
-  };
+    const handleOpenModal = (productId) => {
+        setSelectedProductId(productId);
+        setIsModalOpen(true);
+    };
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedProductId(null); // Reset ID khi đóng
+    };
 
   // --- Render Functions ---
 
@@ -328,7 +327,7 @@ const Product = () => {
                           </div>
                           <div className="product-actions">
                             <button className={`action-btn favorite-btn ${favoriteProducts.has(product.id) ? 'active' : ''}`} onClick={() => toggleFavorite(product.id)}>{favoriteProducts.has(product.id) ? '♥' : '♡'}</button>
-                            <button className="action-btn cart-btn" onClick={() => handleOpenModal(product)}>🛒</button>
+                            <button className="action-btn cart-btn" onClick={() => handleOpenModal(product.id)}>🛒</button>
                           </div>
                         </div>
                       </div>
@@ -340,8 +339,11 @@ const Product = () => {
             )}
           </main>
         </div>
-
-        <ProductModal product={selectedProduct} isOpen={isModalOpen} onClose={handleCloseModal}/>
+            <ProductModal 
+              productId={selectedProductId} 
+              isOpen={isModalOpen} 
+              onClose={handleCloseModal}
+            />
       </div>
     </div>
   );

@@ -6,10 +6,13 @@ import './ProductDetail.css';
 import productService from '../services/productService';
 import colorService from '../services/colorService';
 import FeaturesSection from '../components/FeaturesSection/FeaturesSection';
+import { useCart } from '../contexts/CartContext'; // ĐÃ THÊM: Import hook useCart
 
 const ProductDetail = () => {
   // --- STATE MANAGEMENT ---
   const { productId } = useParams();
+  const { addToCart } = useCart(); // ĐÃ THÊM: Lấy hàm addToCart từ context
+
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,16 +34,12 @@ const ProductDetail = () => {
       try {
         setLoading(true);
         setError(null);
-        setProduct(null);
-        setRelatedProducts([]);
-
         const result = await productService.getProductById(productId);
 
         if (result.success && result.data) {
           const productData = result.data;
           setProduct(productData);
 
-          // Tự động chọn màu và size mặc định
           if (productData.productVariants && productData.productVariants.length > 0) {
             const firstVariant = productData.productVariants[0];
             setSelectedVariant(firstVariant);
@@ -48,9 +47,9 @@ const ProductDetail = () => {
             if (firstVariant.sizes && firstVariant.sizes.length > 0) {
               const firstAvailableSize = firstVariant.sizes.find(s => s.available) || firstVariant.sizes[0];
               setSelectedSizeInfo(firstAvailableSize);
-              setQuantity(1); // Reset số lượng về 1 khi có sản phẩm mới
             }
           }
+          setQuantity(1); // Reset số lượng về 1 khi load sản phẩm mới
         } else {
           setError(result.message || 'Không tìm thấy sản phẩm.');
         }
@@ -69,11 +68,7 @@ const ProductDetail = () => {
     const fetchRelatedProducts = async () => {
       if (product && product.categoryId) {
         try {
-          const filters = {
-            categoryId: product.categoryId,
-            page: 0,
-            size: 5,
-          };
+          const filters = { categoryId: product.categoryId, page: 0, size: 5 };
           const result = await productService.getAllVisibleProducts(filters);
           if (result.success && result.data.content) {
             const filteredRelated = result.data.content
@@ -98,37 +93,60 @@ const ProductDetail = () => {
     if (variant.sizes?.length > 0) {
       const firstAvailableSize = variant.sizes.find(s => s.available) || variant.sizes[0];
       setSelectedSizeInfo(firstAvailableSize);
-      setQuantity(1); // Reset số lượng khi đổi màu
     }
+    setQuantity(1);
     setSelectedImage(0);
   };
 
   const handleSizeSelect = (size) => {
     setSelectedSizeInfo(size);
-    setQuantity(1); // Reset số lượng khi đổi size
+    setQuantity(1);
   };
 
   const handleQuantityChange = (change) => {
-    // Số lượng tối đa cho phép mua là 10 hoặc số lượng trong kho, chọn số nhỏ hơn
     const stockQuantity = selectedSizeInfo?.quantity || 0;
     const purchaseLimit = 10;
     const maxQuantity = Math.min(stockQuantity, purchaseLimit);
 
     setQuantity(prevQuantity => {
       const newQuantity = prevQuantity + change;
-      // Giới hạn số lượng trong khoảng từ 1 đến maxQuantity
-      if (newQuantity >= 1 && newQuantity <= maxQuantity) {
-        return newQuantity;
-      }
-      return prevQuantity; // Giữ nguyên giá trị nếu vượt giới hạn
+      return Math.max(1, Math.min(newQuantity, maxQuantity));
     });
   };
 
   const toggleFavorite = (id) => {
-    const newFavorites = new Set(favoriteProducts);
-    newFavorites.has(id) ? newFavorites.delete(id) : newFavorites.add(id);
-    setFavoriteProducts(newFavorites);
+    setFavoriteProducts(prev => {
+      const newFavorites = new Set(prev);
+      newFavorites.has(id) ? newFavorites.delete(id) : newFavorites.add(id);
+      return newFavorites;
+    });
   };
+
+  // ĐÃ THÊM: Hàm xử lý thêm sản phẩm vào giỏ hàng
+  const handleAddToCart = () => {
+      if (!selectedVariant || !selectedSizeInfo || !selectedSizeInfo.available) {
+          alert("Vui lòng chọn đầy đủ màu sắc, kích thước và đảm bảo sản phẩm còn hàng.");
+          return;
+      }
+
+      const itemToAdd = {
+          id: `${selectedVariant.id}-${selectedSizeInfo.id}`,
+          product_id: product.id,
+          name: product.name,
+          product_variant_id: selectedVariant.id,
+          color: selectedVariant.colorName,
+          size_id: selectedSizeInfo.id,
+          size: selectedSizeInfo.sizeName,
+          quantity: quantity,
+          price: selectedSizeInfo.price,
+          image: selectedVariant.images?.[0]?.imageUrl || '/images/product-placeholder.jpg',
+          // --- BƯỚC 1: THÊM SỐ LƯỢNG TỒN KHO VÀO GIỎ HÀNG ---
+          stock: selectedSizeInfo.quantity 
+      };
+      
+      addToCart(itemToAdd);
+  };
+
 
   // --- HELPERS ---
   const formatPrice = (price) => {
@@ -142,10 +160,8 @@ const ProductDetail = () => {
   if (error) return <div className="error-state-fullpage">Lỗi: {error}</div>;
   if (!product) return <div className="empty-state-fullpage">Không tìm thấy sản phẩm.</div>;
 
-  // Xác định số lượng tối đa có thể mua cho lần render này
   const stockQuantity = selectedSizeInfo?.quantity || 0;
-  const purchaseLimit = 10;
-  const maxAllowedQuantity = Math.min(stockQuantity, purchaseLimit);
+  const maxAllowedQuantity = Math.min(stockQuantity, 10);
 
   return (
     <div className="product-detail-page">
@@ -188,16 +204,12 @@ const ProductDetail = () => {
                       onClick={() => handleColorSelect(variant)}
                       title={variant.colorName}
                     >
-                      <span
-                        className="color-swatch"
-                        style={{ backgroundColor: colorService.getColorHexCode(variant.colorName) }}
-                      ></span>
+                      <span className="color-swatch" style={{ backgroundColor: colorService.getColorHexCode(variant.colorName) }}></span>
                       <span className="color-name-text">{variant.colorName}</span>
                     </button>
                   ))}
                 </div>
               </div>
-
               <div className="option-group">
                 <label className="option-label">Kích thước:</label>
                 <div className="size-options">
@@ -209,36 +221,26 @@ const ProductDetail = () => {
                 </div>
                 <button className="size-guide-btn">📏 Hướng dẫn tính size</button>
               </div>
-
               <div className="option-group">
                 <label className="option-label">Số lượng:</label>
                 <div className="quantity-selector">
-                  <button
-                    className="quantity-btn"
-                    onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1}
-                  >
-                    -
-                  </button>
+                  <button className="quantity-btn" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1}>-</button>
                   <span className="quantity-value">{quantity}</span>
-                  <button
-                    className="quantity-btn"
-                    onClick={() => handleQuantityChange(1)}
-                    disabled={quantity >= maxAllowedQuantity}
-                  >
-                    +
-                  </button>
+                  <button className="quantity-btn" onClick={() => handleQuantityChange(1)} disabled={quantity >= maxAllowedQuantity}>+</button>
                 </div>
-                {stockQuantity > 0 &&
-                  <span className="stock-info">
-                    {stockQuantity} sản phẩm có sẵn
-                  </span>
-                }
+                {stockQuantity > 0 && <span className="stock-info">{stockQuantity} sản phẩm có sẵn</span>}
               </div>
             </div>
             <div className="product-actions-detail">
               <button className="btn-buy-now" disabled={!selectedSizeInfo?.available}>MUA NGAY</button>
-              <button className="btn-add-cart" disabled={!selectedSizeInfo?.available}>THÊM VÀO GIỎ</button>
+              {/* ĐÃ THAY ĐỔI: Gắn sự kiện onClick vào nút */}
+              <button 
+                className="btn-add-cart" 
+                disabled={!selectedSizeInfo?.available}
+                onClick={handleAddToCart}
+              >
+                THÊM VÀO GIỎ
+              </button>
             </div>
           </div>
         </div>
