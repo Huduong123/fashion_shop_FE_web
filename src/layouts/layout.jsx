@@ -1,14 +1,14 @@
 import React from 'react';
 import Header from '../components/Header';
-import BannerSection from '../components/Banner';
-import CategorySection from '../components/CategorySection';
-import RainySeason from '../components/RainySeason';
-import BestSellersSection from '../components/BestSellers';
-import BlogSection from '../components/Blog';
 import Footer from '../components/Footer';
+import CartModal from '../components/CartModal'; // BƯỚC 2: IMPORT CART MODAL
+import { useCart } from '../contexts/CartContext'; // BƯỚC 2: IMPORT useCart
 import './layout.css';
 
 const Layout = ({ children }) => {
+  // BƯỚC 2: Lấy trạng thái và hàm điều khiển modal từ context
+  const { isCartOpen, setIsCartOpen } = useCart();
+
   return (
     <div className="layout">
       <Header />
@@ -16,7 +16,14 @@ const Layout = ({ children }) => {
       <main className="main-content">
         {children}
       </main>
+      
       <Footer />
+
+      {/* BƯỚC 2: Render CartModal ở đây, điều khiển bởi context */}
+      <CartModal 
+        isOpen={isCartOpen} 
+        onClose={() => setIsCartOpen(false)} 
+      />
     </div>
   );
 };
