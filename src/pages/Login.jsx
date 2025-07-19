@@ -1,62 +1,46 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import authService from '../services/authService';
 import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   
-  // Form state
+  // ĐÃ THAY ĐỔI: Chuyển state từ 'email' sang 'username'
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
 
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Handle input change
+  // Handle input change (hàm này không cần đổi)
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
+    setError(null);
   };
 
-  // Validate form
+  // ĐÃ THAY ĐỔI: Cập nhật hàm validate cho username
   const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.email) {
-      newErrors.email = 'Email không được để trống';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email không hợp lệ';
+    if (!formData.username || !formData.password) {
+      setError('Tên đăng nhập và mật khẩu không được để trống.');
+      return false;
     }
-
-    if (!formData.password) {
-      newErrors.password = 'Mật khẩu không được để trống';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return true;
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setError(null);
+
     if (!validateForm()) {
       return;
     }
@@ -64,27 +48,24 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // ĐÃ THAY ĐỔI: authService.login giờ sẽ nhận { username, password }
+      // DTO (Data Transfer Object) này phải khớp với những gì backend UserLoginDTO mong đợi
+      const userData = await authService.login({
+        username: formData.username,
+        password: formData.password
+      });
       
-      // Mock successful login - create user data
-      const userData = {
-        email: formData.email,
-        name: formData.email.split('@')[0], // Use email prefix as name
-        loginTime: new Date().toISOString()
-      };
-      
-      // Call login function from AuthContext
       login(userData);
       
       console.log('Login successful:', userData);
       alert('Đăng nhập thành công!');
       
-      // Redirect to home page
       navigate('/');
+
     } catch (error) {
-      console.error('Login error:', error);
-      alert('Đăng nhập thất bại. Vui lòng thử lại.');
+      console.error('Login failed:', error);
+      setError(error.message || 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.');
+      
     } finally {
       setIsLoading(false);
     }
@@ -97,17 +78,19 @@ const Login = () => {
           <h1 className="login-title">Đăng nhập</h1>
           
           <form onSubmit={handleSubmit} className="login-form">
+            {error && <div className="error-message-general">{error}</div>}
+
+            {/* ĐÃ THAY ĐỔI: Input cho username */}
             <div className="form-group">
               <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                value={formData.email}
+                type="text" // Đổi từ "email" sang "text"
+                name="username" // Đổi từ "email" sang "username"
+                placeholder="Tên đăng nhập" // Đổi placeholder
+                value={formData.username}
                 onChange={handleInputChange}
-                className={`form-input ${errors.email ? 'error' : ''}`}
+                className="form-input"
                 required
               />
-              {errors.email && <span className="error-message">{errors.email}</span>}
             </div>
 
             <div className="form-group">
@@ -117,10 +100,9 @@ const Login = () => {
                 placeholder="Mật khẩu"
                 value={formData.password}
                 onChange={handleInputChange}
-                className={`form-input ${errors.password ? 'error' : ''}`}
+                className="form-input"
                 required
               />
-              {errors.password && <span className="error-message">{errors.password}</span>}
             </div>
 
             <div className="recaptcha-notice">
@@ -157,4 +139,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;

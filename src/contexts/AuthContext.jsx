@@ -16,31 +16,43 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is logged in when app starts
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUserJSON = localStorage.getItem('user');
     const savedAuth = localStorage.getItem('isAuthenticated');
     
-    if (savedUser && savedAuth === 'true') {
-      setUser(JSON.parse(savedUser));
-      setIsAuthenticated(true);
+    // ĐÃ THAY ĐỔI: Thêm điều kiện kiểm tra chặt chẽ hơn
+    if (savedUserJSON && savedUserJSON !== 'undefined' && savedAuth === 'true') {
+      try {
+        const savedUser = JSON.parse(savedUserJSON);
+        setUser(savedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        // Nếu parse lỗi (dữ liệu hỏng), hãy dọn dẹp localStorage
+        console.error("Failed to parse user from localStorage:", error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('isAuthenticated');
+      }
     }
   }, []);
 
   const login = (userData) => {
-    setUser(userData);
-    setIsAuthenticated(true);
-    
-    // Save to localStorage
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('isAuthenticated', 'true');
+    // ĐÃ THAY ĐỔI: Thêm kiểm tra để không bao giờ lưu 'undefined'
+    if (userData) {
+      setUser(userData);
+      setIsAuthenticated(true);
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('isAuthenticated', 'true');
+    } else {
+      console.error("AuthContext: login function called with invalid data.");
+    }
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
     
-    // Clear localStorage
     localStorage.removeItem('user');
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('accessToken'); // Thêm dòng này để chắc chắn xóa cả token
   };
 
   const value = {
@@ -55,4 +67,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-}; 
+};

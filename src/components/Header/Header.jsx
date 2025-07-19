@@ -1,20 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCart } from '../../contexts/CartContext'; // ĐÃ THÊM: Import hook useCart
+import { useCart } from '../../contexts/CartContext';
 import './Header.css';
-// import CartModal from '../CartModal'; // ĐÃ XÓA: Header không còn quản lý CartModal nữa
 import UserDropdown from '../UserDropdown';
 import categoryService from '../../services/categoryService';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuth();
+  // Lấy thêm object 'user' từ AuthContext
+  const { isAuthenticated, logout, user } = useAuth();
   
-  // ĐÃ THAY ĐỔI: Lấy state và hàm từ CartContext
+  // Lấy state và hàm từ CartContext
   const { totalItems, setIsCartOpen } = useCart(); 
   
-  // const [showCartModal, setShowCartModal] = useState(false); // ĐÃ XÓA: State này không còn cần thiết
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [categories, setCategories] = useState([]);
   const [menuLoading, setMenuLoading] = useState(true);
@@ -59,12 +58,10 @@ const Header = () => {
     }
   };
 
-  // ĐÃ THAY ĐỔI: Hàm click giỏ hàng giờ sẽ gọi hàm từ context
+  // Hàm click giỏ hàng giờ sẽ gọi hàm từ context
   const handleCartIconClick = () => {
     setIsCartOpen(true);
   };
-
-  // const closeCartModal = () => {}; // ĐÃ XÓA: Hàm này không còn cần thiết
 
   // Function to close user dropdown
   const closeUserDropdown = () => {
@@ -170,12 +167,20 @@ const Header = () => {
           </div>
           <div className="header-icon user-icon-container" onClick={handleUserIconClick} style={{ cursor: 'pointer', position: 'relative' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <UserDropdown isVisible={showUserDropdown} onClose={closeUserDropdown} onLogout={handleLogout} />
+            
+            {/* Truyền thông tin user xuống UserDropdown */}
+            <UserDropdown 
+              isVisible={showUserDropdown} 
+              onClose={closeUserDropdown} 
+              onLogout={handleLogout}
+              user={user} 
+            />
           </div>
           <div className="header-icon cart-icon" onClick={handleCartIconClick} style={{ cursor: 'pointer' }}>
             <div className="cart-wrapper">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
-              {/* ĐÃ THAY ĐỔI: Hiển thị số lượng sản phẩm từ context và chỉ hiển thị khi có sản phẩm */}
+              
+              {/* Hiển thị số lượng sản phẩm từ context và chỉ hiển thị khi có sản phẩm */}
               {totalItems > 0 && (
                 <span className="cart-count">{totalItems}</span>
               )}
@@ -183,7 +188,6 @@ const Header = () => {
           </div>
         </div>
       </div>
-      {/* ĐÃ XÓA: CartModal đã được chuyển ra ngoài Layout */}
     </header>
   );
 };
