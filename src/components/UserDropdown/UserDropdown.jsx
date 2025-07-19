@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './UserDropdown.css';
+// import { useAuth } from '../../contexts/AuthContext'; // <--- XÓA DÒNG NÀY ĐI
 
-const UserDropdown = ({ isVisible, onClose, onLogout }) => {
+// Component này chỉ nhận props, không gọi hook context.
+const UserDropdown = ({ isVisible, onClose, onLogout, user }) => {
+
   const handleLogout = () => {
     onLogout();
     onClose();
@@ -12,12 +15,14 @@ const UserDropdown = ({ isVisible, onClose, onLogout }) => {
 
   return (
     <>
-      {/* Overlay to close dropdown when clicking outside */}
       <div className="dropdown-overlay" onClick={onClose}></div>
       
       <div className="user-dropdown">
         <div className="dropdown-header">
-          <span className="greeting">HI</span>
+          <span className="greeting">
+            {/* Logic này đã an toàn và đúng */}
+            Chào, {user?.fullname || user?.username || 'Khách'}
+          </span>
         </div>
         
         <div className="dropdown-content">
@@ -38,4 +43,4 @@ const UserDropdown = ({ isVisible, onClose, onLogout }) => {
   );
 };
 
-export default UserDropdown; 
+export default UserDropdown;
