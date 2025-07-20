@@ -173,43 +173,7 @@
   color: #dc2626;
 }
 
-.quantity-controls {
-  display: flex;
-  align-items: center;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  overflow: hidden;
-}
 
-.quantity-btn {
-  background: white;
-  border: none;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 16px;
-  color: #374151;
-  transition: background-color 0.2s ease;
-}
-
-.quantity-btn:hover {
-  background-color: #f3f4f6;
-}
-
-.quantity-value {
-  width: 40px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 500;
-  color: #111827;
-  border-left: 1px solid #d1d5db;
-  border-right: 1px solid #d1d5db;
-}
 
 /* Order Notes Section */
 .order-notes {

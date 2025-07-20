@@ -88,6 +88,27 @@ const cartService = {
       throw error;
     }
   },
+  /**
+   * API 7: Sync local cart items with the backend database upon login.
+   * @param {Array<object>} localCartItems - Array of items from localStorage.
+   */
+  syncLocalCart: async (localCartItems) => {
+    // Backend mong đợi một danh sách các đối tượng có cấu trúc { productVariantId, sizeId, quantity }
+    // Dữ liệu từ localStorage của chúng ta đã có cấu trúc gần đúng, chỉ cần trích xuất các trường cần thiết.
+    const payload = localCartItems.map(item => ({
+      productVariantId: item.product_variant_id,
+      sizeId: item.size_id,
+      quantity: item.quantity,
+    }));
+
+    try {
+      const response = await api.post('/users/cart/sync', payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error syncing local cart:', error.response || error);
+      throw error;
+    }
+  },
 };
 
 export default cartService;
