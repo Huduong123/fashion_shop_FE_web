@@ -3,22 +3,24 @@ import './ProductModal.css';
 import productService from '../../services/productService';
 import colorService from '../../services/colorService';
 import { useCart } from '../../contexts/CartContext';
+import { useAuth } from '../../contexts/AuthContext'; // Import useAuth to check login status
 
 const ProductModal = ({ productId, isOpen, onClose }) => {
-  // State để quản lý dữ liệu được fetch từ API
+  // State to manage data fetched from the API
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  // State để quản lý các lựa chọn của người dùng
+  // State to manage user selections
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [selectedSizeInfo, setSelectedSizeInfo] = useState(null);
   const [quantity, setQuantity] = useState(1);
   
-  // Lấy hàm addToCart từ context
+  // Get functions and state from contexts
   const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth(); // Check if the user is logged in
 
-  // Effect để fetch dữ liệu chi tiết sản phẩm khi modal được mở hoặc productId thay đổi
+  // Effect to fetch product details when the modal opens or productId changes
   useEffect(() => {
     if (isOpen && productId) {
       const fetchProductDetails = async () => {
@@ -31,15 +33,18 @@ const ProductModal = ({ productId, isOpen, onClose }) => {
             const data = result.data;
             setProductData(data);
 
+            // Set default selections
             if (data.productVariants && data.productVariants.length > 0) {
               const firstVariant = data.productVariants[0];
               setSelectedVariant(firstVariant);
 
               if (firstVariant.sizes && firstVariant.sizes.length > 0) {
+                // Prioritize selecting an available size first
                 const firstAvailableSize = firstVariant.sizes.find(s => s.available) || firstVariant.sizes[0];
                 setSelectedSizeInfo(firstAvailableSize);
               }
             }
+            // Reset quantity to 1
             setQuantity(1);
           } else {
             setError(result.message || 'Không tìm thấy sản phẩm.');
@@ -54,19 +59,20 @@ const ProductModal = ({ productId, isOpen, onClose }) => {
     }
   }, [productId, isOpen]);
 
-  // Các hàm xử lý sự kiện lựa chọn
+  // Event handlers for selections
   const handleColorSelect = (variant) => {
     setSelectedVariant(variant);
+    // When color changes, reset size selection to the first available one
     if (variant.sizes?.length > 0) {
         const firstAvailableSize = variant.sizes.find(s => s.available) || variant.sizes[0];
         setSelectedSizeInfo(firstAvailableSize);
     }
-    setQuantity(1);
+    setQuantity(1); // Reset quantity
   };
   
   const handleSizeSelect = (size) => {
     setSelectedSizeInfo(size);
-    setQuantity(1);
+    setQuantity(1); // Reset quantity
   };
 
   const handleQuantityChange = (change) => {
@@ -76,29 +82,39 @@ const ProductModal = ({ productId, isOpen, onClose }) => {
     setQuantity(prev => Math.max(1, Math.min(prev + change, maxAllowed)));
   };
 
-  // Hàm xử lý thêm vào giỏ hàng
+  // --- UPDATED: Add to Cart Logic ---
   const handleAddToCart = () => {
     if (!selectedVariant || !selectedSizeInfo || !productData || !selectedSizeInfo.available) {
       alert('Vui lòng chọn đầy đủ thông tin hoặc sản phẩm đã hết hàng.');
       return;
     }
 
+    // This object structure is now generic.
+    // The CartContext will decide how to handle it based on authentication status.
     const itemToAdd = {
-      id: `${selectedVariant.id}-${selectedSizeInfo.id}`,
+      // For a guest, a unique client-side ID is created.
+      // For a logged-in user, this ID is temporary; the backend will assign the real cart_item.id.
+      id: isAuthenticated ? null : `${selectedVariant.id}-${selectedSizeInfo.id}`,
+      
       product_id: productData.id,
       name: productData.name,
+      
+      // These fields are crucial for the backend API call
       product_variant_id: selectedVariant.id,
-      color: selectedVariant.colorName,
       size_id: selectedSizeInfo.id,
-      size: selectedSizeInfo.sizeName,
       quantity: quantity,
+
+      // Other display properties
+      color: selectedVariant.colorName,
+      size: selectedSizeInfo.sizeName,
       price: selectedSizeInfo.price,
       image: selectedVariant.images?.[0]?.imageUrl || '/images/product-placeholder.jpg',
       stock: selectedSizeInfo.quantity
     };
 
+    // The addToCart function from the context handles both guest and logged-in scenarios
     addToCart(itemToAdd);
-    onClose();
+    onClose(); // Close the modal after adding the item
   };
 
   const formatPrice = (price) => new Intl.NumberFormat('vi-VN').format(price || 0) + 'đ';
@@ -106,6 +122,7 @@ const ProductModal = ({ productId, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const handleOverlayClick = (e) => {
+    // Close the modal only if the overlay itself is clicked
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -131,7 +148,6 @@ const ProductModal = ({ productId, isOpen, onClose }) => {
         </div>
         <div className="modal-details-section">
           <h2 className="modal-product-name">{productData.name}</h2>
-          {/* Dòng SKU đã được xóa khỏi đây */}
           <div className="modal-product-price">{formatPrice(selectedSizeInfo?.price)}</div>
 
           <div className="modal-option-group">

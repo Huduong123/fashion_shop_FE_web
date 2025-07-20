@@ -6,12 +6,14 @@ import './ProductDetail.css';
 import productService from '../services/productService';
 import colorService from '../services/colorService';
 import FeaturesSection from '../components/FeaturesSection/FeaturesSection';
-import { useCart } from '../contexts/CartContext'; // ĐÃ THÊM: Import hook useCart
+import { useCart } from '../contexts/CartContext'; 
+import { useAuth } from '../contexts/AuthContext'; // ĐÃ THÊM: Import hook useAuth
 
 const ProductDetail = () => {
   // --- STATE MANAGEMENT ---
   const { productId } = useParams();
-  const { addToCart } = useCart(); // ĐÃ THÊM: Lấy hàm addToCart từ context
+  const { addToCart } = useCart(); 
+  const { isAuthenticated } = useAuth(); // ĐÃ THÊM: Lấy trạng thái đăng nhập
 
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -122,7 +124,7 @@ const ProductDetail = () => {
     });
   };
 
-  // ĐÃ THÊM: Hàm xử lý thêm sản phẩm vào giỏ hàng
+  // --- ĐÃ SỬA: Cập nhật hàm xử lý thêm sản phẩm vào giỏ hàng ---
   const handleAddToCart = () => {
       if (!selectedVariant || !selectedSizeInfo || !selectedSizeInfo.available) {
           alert("Vui lòng chọn đầy đủ màu sắc, kích thước và đảm bảo sản phẩm còn hàng.");
@@ -130,21 +132,29 @@ const ProductDetail = () => {
       }
 
       const itemToAdd = {
-          id: `${selectedVariant.id}-${selectedSizeInfo.id}`,
+          // Nếu đã đăng nhập, ID sẽ là null để backend tự tạo.
+          // Nếu là khách, tạo ID tạm thời ở client.
+          id: isAuthenticated ? null : `${selectedVariant.id}-${selectedSizeInfo.id}`,
+          
           product_id: product.id,
           name: product.name,
+          
+          // Các trường này bắt buộc phải có cho backend API
           product_variant_id: selectedVariant.id,
-          color: selectedVariant.colorName,
           size_id: selectedSizeInfo.id,
-          size: selectedSizeInfo.sizeName,
           quantity: quantity,
+
+          // Các thuộc tính khác để hiển thị
+          color: selectedVariant.colorName,
+          size: selectedSizeInfo.sizeName,
           price: selectedSizeInfo.price,
           image: selectedVariant.images?.[0]?.imageUrl || '/images/product-placeholder.jpg',
-          // --- BƯỚC 1: THÊM SỐ LƯỢNG TỒN KHO VÀO GIỎ HÀNG ---
           stock: selectedSizeInfo.quantity 
       };
       
+      // Hàm addToCart từ context sẽ xử lý phần còn lại
       addToCart(itemToAdd);
+      alert('Đã thêm sản phẩm vào giỏ hàng!');
   };
 
 
@@ -233,7 +243,6 @@ const ProductDetail = () => {
             </div>
             <div className="product-actions-detail">
               <button className="btn-buy-now" disabled={!selectedSizeInfo?.available}>MUA NGAY</button>
-              {/* ĐÃ THAY ĐỔI: Gắn sự kiện onClick vào nút */}
               <button 
                 className="btn-add-cart" 
                 disabled={!selectedSizeInfo?.available}
