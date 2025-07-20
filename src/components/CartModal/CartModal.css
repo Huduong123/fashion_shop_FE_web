@@ -277,48 +277,59 @@
   }
 } 
 
-/* Thêm vào cuối file CartModal.css */
-.cart-item-quantity-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-}
 
-.cart-item-quantity-selector button {
-  background-color: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  color: #374151;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-}
-
-.cart-item-quantity-selector button:hover {
-  background-color: #e5e7eb;
-}
-
-.cart-item-quantity-selector button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.cart-item-quantity-selector span {
-  font-size: 14px;
-  font-weight: 500;
-  min-width: 20px;
-  text-align: center;
-}
 .cart-item-limit-notice {
   font-size: 11px;
   color: #dc3545; /* Màu đỏ cảnh báo */
   margin: 5px 0 0 0;
   padding: 0;
   font-weight: 500;
+}
+.cart-item-name-link {
+  color: inherit; /* Kế thừa màu chữ từ thẻ cha */
+  text-decoration: none; /* Bỏ gạch chân */
+}
+
+.cart-item-name-link:hover .cart-item-name {
+  text-decoration: underline; /* Thêm gạch chân khi di chuột qua */
+}
+
+/* Điều chỉnh lại khu vực thông báo giỏ hàng trống để đẹp hơn */
+.empty-cart-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  height: 100%; /* Giúp nội dung căn giữa theo chiều dọc */
+}
+
+.empty-cart-content p {
+  font-size: 16px;
+  color: #6b7280;
+}
+
+/* Style cho nút "Bắt đầu mua sắm" mới trong modal */
+/* Nó sẽ có style dạng "outline" để phân biệt với nút chính */
+.continue-shopping-btn-modal {
+  width: 100%;
+  background: transparent;
+  color: #111827; /* Màu chữ tối để hợp với theme của modal */
+  border: 2px solid #111827; /* Viền tối */
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.continue-shopping-btn-modal:hover {
+  background-color: #111827;
+  color: white;
 }

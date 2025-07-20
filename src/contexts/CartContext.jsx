@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth } from './AuthContext'; // To check login status
-import cartService from '../services/cartService'; // To make API calls
+import { useAuth } from './AuthContext';
+import cartService from '../services/cartService';
 
 const CartContext = createContext();
 
@@ -8,13 +8,13 @@ export const useCart = () => useContext(CartContext);
 
 const CART_STORAGE_KEY = 'anonymous_cart';
 
-// Helper to get initial state from localStorage for guests
+// Helper để đọc giỏ hàng của khách từ localStorage
 const getGuestCartState = () => {
   try {
     const storedCart = localStorage.getItem(CART_STORAGE_KEY);
     return storedCart ? JSON.parse(storedCart) : [];
   } catch (error) {
-    console.error("Error reading guest cart from localStorage:", error);
+    console.error("Lỗi khi đọc giỏ hàng của khách từ localStorage:", error);
     return [];
   }
 };
@@ -23,11 +23,12 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { isAuthenticated } = useAuth(); // Get user's login status
+  const { isAuthenticated } = useAuth(); // Lấy trạng thái đăng nhập
 
-  // Mapper function to transform API data to the frontend's cart item structure
+  // Hàm chuyển đổi dữ liệu từ API sang cấu trúc của frontend
   const mapApiItemToFrontend = (apiItem) => ({
-    id: apiItem.id, // This is the cart_item.id from the database
+    id: apiItem.id,
+    productId: apiItem.productId,
     product_variant_id: apiItem.productVariantId,
     name: apiItem.productName,
     color: apiItem.colorName,
@@ -36,63 +37,83 @@ export const CartProvider = ({ children }) => {
     quantity: apiItem.quantity,
     price: apiItem.price,
     image: apiItem.imageUrl,
-    stock: apiItem.stock, // Assuming the API might provide this in the future
+    stock: apiItem.stock,
   });
 
-  // Function to sync the cart with the backend
+  // --- HÀM ĐỒNG BỘ GIỎ HÀNG ĐÃ ĐƯỢC VIẾT LẠI ---
+  // Hàm này giờ đây xử lý cả việc hợp nhất giỏ hàng của khách khi đăng nhập
   const syncCart = useCallback(async () => {
-    if (isAuthenticated) {
-      setIsLoading(true);
-      try {
-        const apiCartItems = await cartService.getCartItems();
-        localStorage.removeItem(CART_STORAGE_KEY); // Clear guest cart upon login
-        setCartItems(apiCartItems.map(mapApiItemToFrontend));
-      } catch (error) {
-        console.error("Failed to sync cart with the database:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      // If user logs out or is a guest, load from localStorage
-      setCartItems(getGuestCartState());
-    }
-  }, [isAuthenticated]);
+    setIsLoading(true);
+    try {
+      if (isAuthenticated) {
+        // BƯỚC 1: KIỂM TRA GIỎ HÀNG CỦA KHÁCH TRONG LOCALSTORAGE
+        const guestCart = getGuestCartState();
 
-  // Effect to sync cart when authentication state changes (login/logout)
+        if (guestCart.length > 0) {
+          console.log("Phát hiện giỏ hàng của khách, bắt đầu đồng bộ...");
+          // BƯỚC 2: GỬI GIỎ HÀNG CỦA KHÁCH LÊN SERVER ĐỂ HỢP NHẤT
+          await cartService.syncLocalCart(guestCart);
+          // BƯỚC 3: XÓA GIỎ HÀNG CỦA KHÁCH SAU KHI ĐỒNG BỘ THÀNH CÔNG
+          localStorage.removeItem(CART_STORAGE_KEY);
+          console.log("Đồng bộ thành công, đã xóa giỏ hàng local.");
+        }
+
+        // BƯỚC 4: TẢI GIỎ HÀNG CUỐI CÙNG (ĐÃ ĐƯỢC HỢP NHẤT) TỪ SERVER
+        const apiCartItems = await cartService.getCartItems();
+        setCartItems(apiCartItems.map(mapApiItemToFrontend));
+
+      } else {
+        // Nếu không đăng nhập, chỉ cần tải từ localStorage
+        setCartItems(getGuestCartState());
+      }
+    } catch (error) {
+      console.error("Lỗi nghiêm trọng trong quá trình đồng bộ giỏ hàng:", error);
+      // Có thể thêm logic để xử lý lỗi, ví dụ: hiển thị thông báo cho người dùng
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]); // Phụ thuộc vào trạng thái đăng nhập
+
+  // Effect này sẽ tự động chạy khi `isAuthenticated` thay đổi (khi người dùng đăng nhập hoặc đăng xuất)
   useEffect(() => {
     syncCart();
   }, [syncCart]);
 
-  // Effect to save to localStorage ONLY for guest users
+  // Effect này chỉ lưu giỏ hàng vào localStorage KHI NGƯỜI DÙNG LÀ KHÁCH
   useEffect(() => {
     if (!isAuthenticated) {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
     }
   }, [cartItems, isAuthenticated]);
 
-  // --- CART ACTIONS ---
+  // --- CÁC HÀM XỬ LÝ GIỎ HÀNG (GIỮ NGUYÊN) ---
 
   const addToCart = async (newItem) => {
     setIsLoading(true);
     if (isAuthenticated) {
       try {
         await cartService.addToCart(newItem);
-        await syncCart(); // Re-fetch the entire cart to ensure consistency
+        await syncCart(); // Tải lại toàn bộ giỏ hàng để đảm bảo nhất quán
       } catch (error) {
         alert("Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
       }
     } else {
-      // Guest user logic (localStorage)
+      // Logic cho khách (localStorage)
       setCartItems(prevItems => {
-        const existingItem = prevItems.find(item => item.id === newItem.id);
+        const existingItem = prevItems.find(item => 
+          item.product_variant_id === newItem.product_variant_id && 
+          item.size_id === newItem.size_id
+        );
         if (existingItem) {
           return prevItems.map(item =>
-            item.id === newItem.id
+            (item.product_variant_id === newItem.product_variant_id && item.size_id === newItem.size_id)
               ? { ...item, quantity: item.quantity + newItem.quantity }
               : item
           );
         }
-        return [...prevItems, newItem];
+        // Tạo ID tạm thời cho khách nếu chưa có
+        const itemWithId = { ...newItem, id: newItem.id || `${newItem.product_variant_id}-${newItem.size_id}` };
+        return [...prevItems, itemWithId];
       });
     }
     setIsLoading(false);
@@ -109,7 +130,7 @@ export const CartProvider = ({ children }) => {
         alert("Lỗi khi xóa sản phẩm. Vui lòng thử lại.");
       }
     } else {
-      // Guest user logic
+      // Logic cho khách
       setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
     }
     setIsLoading(false);
@@ -118,37 +139,44 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = async (itemId, change) => {
     setIsLoading(true);
     const itemToUpdate = cartItems.find(item => item.id === itemId);
-    if (!itemToUpdate) return;
-    
-    // Optimistic UI update for perceived speed
-    const newQuantity = itemToUpdate.quantity + change;
-    if (newQuantity <= 0 && !isAuthenticated) {
-         setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
-    } else {
-        setCartItems(prevItems => prevItems.map(item =>
-            item.id === itemId ? { ...item, quantity: newQuantity } : item
-        ));
+    if (!itemToUpdate) {
+        setIsLoading(false);
+        return;
     }
+    
+    const newQuantity = itemToUpdate.quantity + change;
 
     if (isAuthenticated) {
+      // Logic cho người dùng đã đăng nhập
       try {
         if (change > 0) {
           await cartService.increaseQuantity(itemId);
         } else {
           await cartService.decreaseQuantity(itemId);
         }
-        await syncCart(); // Re-sync with the server for the correct state
+        await syncCart(); // Đồng bộ lại để lấy trạng thái chính xác nhất từ server
       } catch (error) {
         alert("Lỗi khi cập nhật số lượng.");
-        setCartItems(cartItems); // Revert optimistic update on error
+        // Không cần revert vì syncCart() sẽ tự lấy lại trạng thái đúng
+      }
+    } else {
+      // Logic cho khách (localStorage)
+      if (newQuantity <= 0) {
+        setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
+      } else {
+        setCartItems(prevItems => prevItems.map(item =>
+            item.id === itemId ? { ...item, quantity: newQuantity } : item
+        ));
       }
     }
     setIsLoading(false);
   };
 
+  // --- CÁC GIÁ TRỊ TÍNH TOÁN ---
   const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
 
+  // --- GIÁ TRỊ CUNG CẤP BỞI CONTEXT ---
   const value = {
     cartItems,
     addToCart,

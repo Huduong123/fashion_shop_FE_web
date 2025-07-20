@@ -1,88 +1,43 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
+import QuantitySelector from '../components/common/QuantitySelector/QuantitySelector'; // Đường dẫn đã được cập nhật
 import './Cart.css';
 
 const Cart = () => {
   const navigate = useNavigate();
   
-  // Mock data cho giỏ hàng
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Quần Short Nam Nâng Đồng SP25FH32P-AK",
-      color: "GREY",
-      size: "XXL",
-      quantity: 1,
-      price: 600000,
-      image: "/uploads/product1.webp"
-    },
-    {
-      id: 2,
-      name: "Áo Khoác Nam Thời Trang JK25SSO1T-PA",
-      color: "LIGHT GREY",
-      size: "S",
-      quantity: 1,
-      price: 1200000,
-      image: "/uploads/product2.webp"
-    },
-    {
-      id: 3,
-      name: "Áo Khoác Nam Thời Trang JK25SSO1T-PA",
-      color: "LIGHT GREY",
-      size: "XL",
-      quantity: 1,
-      price: 1200000,
-      image: "/uploads/product3.webp"
-    },
-    {
-      id: 4,
-      name: "Áo Polo Nam Tay Ngắn Form Vừa KS25SS16C-SCHE",
-      color: "WHITE",
-      size: "2XL",
-      quantity: 1,
-      price: 980000,
-      image: "/uploads/product4.webp"
-    }
-  ]);
+  // Lấy dữ liệu và các hàm từ CartContext
+  const { cartItems, removeFromCart, totalAmount, totalItems, isLoading } = useCart();
 
+  // State cho các trường chỉ thuộc về trang này
   const [note, setNote] = useState('');
   const [invoiceRequired, setInvoiceRequired] = useState(false);
 
-  // Tính tổng tiền
-  const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const savings = 0; // Có thể tính toán discount nếu có
+  // Tổng tiền tiết kiệm (tạm thời, có thể tính toán sau này)
+  const savings = 0; 
 
   // Format số tiền
   const formatPrice = (price) => {
-    return price.toLocaleString('vi-VN') + 'đ';
+    return (price || 0).toLocaleString('vi-VN') + 'đ';
   };
 
-  // Xử lý thay đổi số lượng
-  const handleQuantityChange = (itemId, newQuantity) => {
-    if (newQuantity <= 0) return;
-    setCartItems(cartItems.map(item => 
-      item.id === itemId 
-        ? { ...item, quantity: newQuantity }
-        : item
-    ));
-  };
-
-  // Xử lý xóa sản phẩm
+  // Hàm xử lý xóa sản phẩm
   const handleRemoveItem = (itemId) => {
-    setCartItems(cartItems.filter(item => item.id !== itemId));
+    removeFromCart(itemId);
   };
 
-  // Xử lý thanh toán
+  // Hàm xử lý thanh toán
   const handleCheckout = () => {
-    // Navigate đến trang payment
     navigate('/payment');
   };
 
-  // Xử lý tiếp tục mua hàng
+  // Hàm xử lý tiếp tục mua hàng
   const handleContinueShopping = () => {
-    // Navigate về trang sản phẩm
-    window.location.href = '/products';
+    navigate('/products');
   };
+
+  // Hàm handleQuantityChange đã được xóa bỏ vì logic đã chuyển vào QuantitySelector
 
   return (
     <div className="cart-page">
@@ -91,7 +46,7 @@ const Cart = () => {
         <div className="breadcrumb">
           <Link to="/" className="breadcrumb-link">Trang chủ</Link>
           <span className="breadcrumb-separator">/</span>
-          <span className="breadcrumb-current">Giỏ hàng ({cartItems.length})</span>
+          <span className="breadcrumb-current">Giỏ hàng ({totalItems})</span>
         </div>
 
         {/* Page Title */}
@@ -103,24 +58,30 @@ const Cart = () => {
         <div className="cart-content">
           {/* Left Content - Cart Items */}
           <div className="cart-main">
-            {cartItems.length === 0 ? (
+            {isLoading ? (
+                <div className="loading-cart"><p>Đang tải giỏ hàng...</p></div>
+            ) : cartItems.length === 0 ? (
               <div className="empty-cart">
                 <p>Giỏ hàng của bạn đang trống</p>
-                <Link to="/products" className="continue-shopping-btn">
+                <button onClick={handleContinueShopping} className="continue-shopping-btn">
                   Tiếp tục mua hàng
-                </Link>
+                </button>
               </div>
             ) : (
               <>
                 <div className="cart-items">
                   {cartItems.map((item) => (
                     <div key={item.id} className="cart-item">
-                      <div className="cart-item-image">
-                        <img src={item.image} alt={item.name} />
-                      </div>
+                      <Link to={`/product/${item.productId}`}>
+                        <div className="cart-item-image">
+                          <img src={item.image || '/placeholder.png'} alt={item.name} />
+                        </div>
+                      </Link>
                       
                       <div className="cart-item-details">
-                        <h3 className="cart-item-name">{item.name}</h3>
+                        <Link to={`/product/${item.productId}`} className="cart-item-name-link">
+                          <h3 className="cart-item-name">{item.name}</h3>
+                        </Link>
                         <div className="cart-item-variant">
                           <span>{item.color} / {item.size}</span>
                         </div>
@@ -133,24 +94,12 @@ const Cart = () => {
                         <button 
                           className="cart-item-remove"
                           onClick={() => handleRemoveItem(item.id)}
+                          disabled={isLoading}
                         >
                           ×
                         </button>
-                        <div className="quantity-controls">
-                          <button 
-                            className="quantity-btn"
-                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                          >
-                            -
-                          </button>
-                          <span className="quantity-value">{item.quantity}</span>
-                          <button 
-                            className="quantity-btn"
-                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                          >
-                            +
-                          </button>
-                        </div>
+                        {/* SỬ DỤNG COMPONENT TÁI SỬ DỤNG */}
+                        <QuantitySelector item={item} isLoading={isLoading} />
                       </div>
                     </div>
                   ))}
@@ -167,7 +116,7 @@ const Cart = () => {
                   />
                   <div className="policy-notice">
                     <strong>Chính sách mua hàng</strong>
-                    <p>→ KHÔNG ÁP DỤNG ĐỔI TRẢ ĐỐI VỚI SẢN PHẨM MUA TRONG CHƯƠNG TRÌNH KHUYẾN MÃI</p>
+                    <p>→ KHÔNG ÁP DỤNG ĐỔI TRẢ ĐỐI VỚI SẢN PHẨM MUA TRONG CHƯƠG TRÌNH KHUYẾN MÃI</p>
                     <p>→ Lưu ý: Quý Khách có nhu cầu xuất hóa đơn vui lòng điền thông tin ở phần Xuất Hóa Đơn Cho Đơn Hàng ở bên dưới</p>
                   </div>
                   
@@ -181,14 +130,6 @@ const Cart = () => {
                       <span className="checkmark"></span>
                       Xuất hóa đơn cho đơn hàng
                     </label>
-                  </div>
-                </div>
-
-                {/* Related Products Section */}
-                <div className="related-products">
-                  <h3>SẢN PHẨM LIÊN QUAN</h3>
-                  <div className="no-related-products">
-                    <p>KHÔNG CÓ SẢN PHẨM PHÙ HỢP</p>
                   </div>
                 </div>
               </>
@@ -210,7 +151,7 @@ const Cart = () => {
                 </div>
 
                 <div className="checkout-actions">
-                  <button className="checkout-btn" onClick={handleCheckout}>
+                  <button className="checkout-btn" onClick={handleCheckout} disabled={isLoading}>
                     THANH TOÁN
                   </button>
                   <button className="continue-shopping-btn" onClick={handleContinueShopping}>
@@ -226,4 +167,4 @@ const Cart = () => {
   );
 };
 
-export default Cart; 
+export default Cart;

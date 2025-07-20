@@ -6,25 +6,33 @@ import './ProductDetail.css';
 import productService from '../services/productService';
 import colorService from '../services/colorService';
 import FeaturesSection from '../components/FeaturesSection/FeaturesSection';
-import { useCart } from '../contexts/CartContext'; 
-import { useAuth } from '../contexts/AuthContext'; // ĐÃ THÊM: Import hook useAuth
+import { useProductSelector } from '../hooks/useProductSelector'; // Đã import hook
 
 const ProductDetail = () => {
-  // --- STATE MANAGEMENT ---
   const { productId } = useParams();
-  const { addToCart } = useCart(); 
-  const { isAuthenticated } = useAuth(); // ĐÃ THÊM: Lấy trạng thái đăng nhập
 
+  // --- STATE DÀNH RIÊNG CHO COMPONENT NÀY ---
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedVariant, setSelectedVariant] = useState(null);
-  const [selectedSizeInfo, setSelectedSizeInfo] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const [favoriteProducts, setFavoriteProducts] = useState(new Set());
+
+  // --- GỌI CUSTOM HOOK ĐỂ LẤY LOGIC VÀ STATE CHUNG ---
+  const {
+    selectedVariant,
+    selectedSizeInfo,
+    quantity,
+    handleColorSelect,
+    handleSizeSelect,
+    handleQuantityChange,
+    handleAddToCart,
+    maxAllowedQuantity,
+    isAddToCartDisabled,
+    stockQuantity,
+  } = useProductSelector(product);
 
   // --- USE EFFECTS ---
 
@@ -39,19 +47,7 @@ const ProductDetail = () => {
         const result = await productService.getProductById(productId);
 
         if (result.success && result.data) {
-          const productData = result.data;
-          setProduct(productData);
-
-          if (productData.productVariants && productData.productVariants.length > 0) {
-            const firstVariant = productData.productVariants[0];
-            setSelectedVariant(firstVariant);
-
-            if (firstVariant.sizes && firstVariant.sizes.length > 0) {
-              const firstAvailableSize = firstVariant.sizes.find(s => s.available) || firstVariant.sizes[0];
-              setSelectedSizeInfo(firstAvailableSize);
-            }
-          }
-          setQuantity(1); // Reset số lượng về 1 khi load sản phẩm mới
+          setProduct(result.data);
         } else {
           setError(result.message || 'Không tìm thấy sản phẩm.');
         }
@@ -88,33 +84,13 @@ const ProductDetail = () => {
     fetchRelatedProducts();
   }, [product]);
 
-  // --- EVENT HANDLERS ---
-
-  const handleColorSelect = (variant) => {
-    setSelectedVariant(variant);
-    if (variant.sizes?.length > 0) {
-      const firstAvailableSize = variant.sizes.find(s => s.available) || variant.sizes[0];
-      setSelectedSizeInfo(firstAvailableSize);
-    }
-    setQuantity(1);
+  // Effect #3: Cập nhật ảnh chính khi variant thay đổi
+  useEffect(() => {
     setSelectedImage(0);
-  };
+  }, [selectedVariant]);
 
-  const handleSizeSelect = (size) => {
-    setSelectedSizeInfo(size);
-    setQuantity(1);
-  };
 
-  const handleQuantityChange = (change) => {
-    const stockQuantity = selectedSizeInfo?.quantity || 0;
-    const purchaseLimit = 10;
-    const maxQuantity = Math.min(stockQuantity, purchaseLimit);
-
-    setQuantity(prevQuantity => {
-      const newQuantity = prevQuantity + change;
-      return Math.max(1, Math.min(newQuantity, maxQuantity));
-    });
-  };
+  // --- CÁC HÀM VÀ BIẾN CÒN LẠI ---
 
   const toggleFavorite = (id) => {
     setFavoriteProducts(prev => {
@@ -124,54 +100,17 @@ const ProductDetail = () => {
     });
   };
 
-  // --- ĐÃ SỬA: Cập nhật hàm xử lý thêm sản phẩm vào giỏ hàng ---
-  const handleAddToCart = () => {
-      if (!selectedVariant || !selectedSizeInfo || !selectedSizeInfo.available) {
-          alert("Vui lòng chọn đầy đủ màu sắc, kích thước và đảm bảo sản phẩm còn hàng.");
-          return;
-      }
-
-      const itemToAdd = {
-          // Nếu đã đăng nhập, ID sẽ là null để backend tự tạo.
-          // Nếu là khách, tạo ID tạm thời ở client.
-          id: isAuthenticated ? null : `${selectedVariant.id}-${selectedSizeInfo.id}`,
-          
-          product_id: product.id,
-          name: product.name,
-          
-          // Các trường này bắt buộc phải có cho backend API
-          product_variant_id: selectedVariant.id,
-          size_id: selectedSizeInfo.id,
-          quantity: quantity,
-
-          // Các thuộc tính khác để hiển thị
-          color: selectedVariant.colorName,
-          size: selectedSizeInfo.sizeName,
-          price: selectedSizeInfo.price,
-          image: selectedVariant.images?.[0]?.imageUrl || '/images/product-placeholder.jpg',
-          stock: selectedSizeInfo.quantity 
-      };
-      
-      // Hàm addToCart từ context sẽ xử lý phần còn lại
-      addToCart(itemToAdd);
-      alert('Đã thêm sản phẩm vào giỏ hàng!');
-  };
-
-
-  // --- HELPERS ---
   const formatPrice = (price) => {
     if (price === null || price === undefined) return 'Liên hệ';
     return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
   };
+  
   const currentImages = selectedVariant?.images?.sort((a, b) => a.displayOrder - b.displayOrder).map(img => img.imageUrl) ?? [];
 
   // --- RENDER LOGIC ---
   if (loading) return <div className="loading-state-fullpage">Đang tải sản phẩm...</div>;
   if (error) return <div className="error-state-fullpage">Lỗi: {error}</div>;
   if (!product) return <div className="empty-state-fullpage">Không tìm thấy sản phẩm.</div>;
-
-  const stockQuantity = selectedSizeInfo?.quantity || 0;
-  const maxAllowedQuantity = Math.min(stockQuantity, 10);
 
   return (
     <div className="product-detail-page">
@@ -242,10 +181,10 @@ const ProductDetail = () => {
               </div>
             </div>
             <div className="product-actions-detail">
-              <button className="btn-buy-now" disabled={!selectedSizeInfo?.available}>MUA NGAY</button>
+              <button className="btn-buy-now" disabled={isAddToCartDisabled}>MUA NGAY</button>
               <button 
                 className="btn-add-cart" 
-                disabled={!selectedSizeInfo?.available}
+                disabled={isAddToCartDisabled}
                 onClick={handleAddToCart}
               >
                 THÊM VÀO GIỎ

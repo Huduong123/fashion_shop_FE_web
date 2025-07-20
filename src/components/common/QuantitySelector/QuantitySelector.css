@@ -1,0 +1,48 @@
+/* File: src/components/common/QuantitySelector/QuantitySelector.css */
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: white;
+}
+
+.quantity-selector .quantity-btn {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  transition: background-color 0.2s ease;
+}
+
+.quantity-selector .quantity-btn:hover:not(:disabled) {
+  background-color: #f3f4f6;
+}
+
+/* Style cho nút khi bị vô hiệu hóa */
+.quantity-selector .quantity-btn:disabled {
+  color: #9ca3af; /* Màu chữ mờ đi */
+  cursor: not-allowed; /* Con trỏ không cho phép */
+  background-color: #f9fafb; /* Màu nền hơi khác biệt */
+}
+
+.quantity-selector .quantity-value {
+  width: 40px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  color: #111827;
+  border-left: 1px solid #d1d5db;
+  border-right: 1px solid #d1d5db;
+}
