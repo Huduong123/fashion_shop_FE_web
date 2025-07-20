@@ -5,17 +5,19 @@ import { useCart } from '../../contexts/CartContext';
 
 const CartModal = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { cartItems, removeFromCart, updateQuantity, totalAmount } = useCart();
+  // The hooks now provide the correct data regardless of login state
+  const { cartItems, removeFromCart, updateQuantity, totalAmount, isLoading } = useCart();
 
   const formatPrice = (price) => (price || 0).toLocaleString('vi-VN') + ' VND';
-  
+
+  // No changes needed here, just calls the context function
   const handleRemoveItem = (itemId) => {
     removeFromCart(itemId);
   };
-  
+
+  // The function now takes the change (-1 or 1) directly
   const handleQuantityChange = (item, change) => {
-    const newQuantity = item.quantity + change;
-    updateQuantity(item.id, newQuantity);
+    updateQuantity(item.id, change);
   };
 
   const handleCheckout = () => {
@@ -34,70 +36,33 @@ const CartModal = ({ isOpen, onClose }) => {
         </div>
 
         <div className="cart-modal-body">
-          {cartItems.length === 0 ? (
-            <div className="empty-cart">
-              <p>Giỏ hàng của bạn đang trống</p>
-            </div>
+          {isLoading ? (
+            <div className="empty-cart"><p>Đang cập nhật giỏ hàng...</p></div>
+          ) : cartItems.length === 0 ? (
+            <div className="empty-cart"><p>Giỏ hàng của bạn đang trống</p></div>
           ) : (
             <div className="cart-items-list">
-              {cartItems.map((item) => {
-                // --- TÍNH TOÁN GIỚI HẠN CHO TỪNG SẢN PHẨM TRONG GIAO DIỆN ---
-                const purchaseLimit = 10;
-                // Nếu item.stock không tồn tại, mặc định là 10 để tránh lỗi
-                const maxAllowedQuantity = Math.min(item.stock || purchaseLimit, purchaseLimit);
-                const hasReachedLimit = item.quantity >= maxAllowedQuantity;
-
-                return (
-                  <div key={item.id} className="cart-item">
-                    <div className="cart-item-image">
-                      <img src={item.image} alt={item.name} />
-                    </div>
-                    
-                    <div className="cart-item-details">
-                      <h4 className="cart-item-name">{item.name}</h4>
-                      <div className="cart-item-info">
-                        <span className="cart-item-color">Màu sắc: {item.color}</span>
-                        <span className="cart-item-size">Size: {item.size}</span>
-                        
-                        <div className="cart-item-quantity-selector">
-                           {/* Vô hiệu hóa nút giảm khi số lượng là 1 */}
-                           <button 
-                             onClick={() => handleQuantityChange(item, -1)} 
-                             disabled={item.quantity <= 1}
-                           >
-                             -
-                           </button>
-                           <span>{item.quantity}</span>
-                           {/* Vô hiệu hóa nút tăng khi đã đạt giới hạn */}
-                           <button 
-                             onClick={() => handleQuantityChange(item, 1)} 
-                             disabled={hasReachedLimit}
-                           >
-                             +
-                           </button>
-                        </div>
-
-                        {/* Hiển thị thông báo khi đạt giới hạn */}
-                        {hasReachedLimit && (
-                            <p className="cart-item-limit-notice">
-                                Đã đạt số lượng tối đa
-                            </p>
-                        )}
-                      </div>
-                      <div className="cart-item-price">
-                        {formatPrice(item.price * item.quantity)}
-                      </div>
-                    </div>
-
-                    <button 
-                      className="cart-item-remove"
-                      onClick={() => handleRemoveItem(item.id)}
-                    >
-                      ×
-                    </button>
+              {cartItems.map((item) => (
+                <div key={item.id} className="cart-item">
+                  <div className="cart-item-image">
+                    <img src={item.image} alt={item.name} />
                   </div>
-                );
-              })}
+                  <div className="cart-item-details">
+                    <h4 className="cart-item-name">{item.name}</h4>
+                    <div className="cart-item-info">
+                      <span className="cart-item-color">Màu sắc: {item.color}</span>
+                      <span className="cart-item-size">Size: {item.size}</span>
+                      <div className="cart-item-quantity-selector">
+                        <button onClick={() => handleQuantityChange(item, -1)} disabled={item.quantity <= 1}>-</button>
+                        <span>{item.quantity}</span>
+                        <button onClick={() => handleQuantityChange(item, 1)}>+</button>
+                      </div>
+                    </div>
+                    <div className="cart-item-price">{formatPrice(item.price * item.quantity)}</div>
+                  </div>
+                  <button className="cart-item-remove" onClick={() => handleRemoveItem(item.id)}>×</button>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -108,7 +73,7 @@ const CartModal = ({ isOpen, onClose }) => {
               <span className="total-label">TỔNG TIỀN:</span>
               <span className="total-amount">{formatPrice(totalAmount)}</span>
             </div>
-            <button className="checkout-button" onClick={handleCheckout}>
+            <button className="checkout-button" onClick={handleCheckout} disabled={isLoading}>
               XEM GIỎ HÀNG
             </button>
           </div>
