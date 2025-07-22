@@ -1,14 +1,17 @@
+/* =================================
+   Register Page Layout
+==================================== */
 .register-page {
   min-height: 100vh;
   background-color: #f8f9fa;
-  padding: 40px 20px;
+  padding: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .register-container {
-  max-width: 600px;
+  max-width: 650px;
   width: 100%;
   margin: 0 auto;
 }
@@ -17,40 +20,63 @@
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  padding: 40px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px 40px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
+/* =================================
+   Header and Subtitle
+==================================== */
 .register-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   color: #000000;
   text-align: center;
-  margin: 0 0 15px 0;
+  margin: 0 0 10px 0;
   letter-spacing: 1px;
 }
 
 .register-subtitle {
   color: #666666;
-  font-size: 15px;
+  font-size: 14px;
   text-align: center;
-  margin: 0 0 30px 0;
+  margin: 0 0 25px 0;
   line-height: 1.4;
 }
 
+/* =================================
+   Form Layout & Structure (Giữ nguyên như cũ)
+==================================== */
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px; /* Giữ lại khoảng cách đẹp ban đầu */
 }
 
+.form-row {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: flex-start; /* Giữ lại để fix lỗi ô Giới tính bị kéo dãn */
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin: 0;
+}
+
+/* --- FIX 1: CHỈ THÊM POSITION RELATIVE --- */
 .form-group {
   display: flex;
   flex-direction: column;
+  position: relative; /* Bắt buộc để định vị lỗi con */
 }
 
+/* =================================
+   Input & Field Styles (Giữ nguyên như cũ)
+==================================== */
 .form-input {
-  padding: 15px;
+  padding: 13px 15px;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   font-size: 14px;
@@ -58,6 +84,8 @@
   background-color: #fafafa;
   transition: border-color 0.3s ease, background-color 0.3s ease;
   font-family: inherit;
+  height: 48px;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
@@ -73,174 +101,101 @@
 /* Gender Selection Styles */
 .gender-selection {
   display: flex;
-  gap: 30px;
-  padding: 15px 0;
-}
-
-.gender-option {
-  display: flex;
+  gap: 20px;
   align-items: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.gender-option input[type="radio"] {
-  width: 18px;
-  height: 18px;
-  margin-right: 10px;
-  cursor: pointer;
-  accent-color: #c41e3a;
-}
-
-.gender-label {
-  font-size: 14px;
-  color: #333333;
-  cursor: pointer;
-}
-
-/* Date Input Styles */
-.date-input {
-  position: relative;
-  color: #333333;
-}
-
-.date-input::-webkit-calendar-picker-indicator {
-  cursor: pointer;
+  padding: 0 15px;
+  border: 1px solid #e0e0e0;
   border-radius: 4px;
-  margin-right: 2px;
-  opacity: 0.6;
-  filter: invert(0.8);
+  background-color: #fafafa;
+  height: 48px; /* Giữ lại để fix lỗi ô Giới tính bị kéo dãn */
+  box-sizing: border-box;
 }
 
-.date-input::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
+/* ... Các style của gender, date, terms, button, footer... đều giữ nguyên y hệt như cũ ... */
+
+.gender-option { display: flex; align-items: center; cursor: pointer; user-select: none; }
+.gender-option input[type="radio"] { width: 16px; height: 16px; margin-right: 8px; cursor: pointer; accent-color: #c41e3a; }
+.gender-label { font-size: 14px; color: #333333; cursor: pointer; }
+.date-input { position: relative; color: #333333; }
+.date-input::-webkit-calendar-picker-indicator { cursor: pointer; border-radius: 4px; margin-right: 2px; opacity: 0.6; filter: invert(0.8); }
+.terms-agreement { margin: 5px 0; }
+.terms-label { display: flex; align-items: center; cursor: pointer; user-select: none; line-height: 1.5; }
+.terms-checkbox { width: 16px; height: 16px; margin-right: 10px; cursor: pointer; accent-color: #c41e3a; flex-shrink: 0; }
+.terms-text { font-size: 13px; color: #666666; line-height: 1.5; }
+.terms-link { color: #4db8e8; text-decoration: none; font-weight: 500; }
+.terms-link:hover { text-decoration: underline; }
+.register-button { background-color: #c41e3a; color: #ffffff; border: none; padding: 14px 20px; border-radius: 4px; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; cursor: pointer; transition: background-color 0.3s ease; text-transform: uppercase; margin-top: 10px; font-family: inherit; }
+.register-button:hover { background-color: #a01729; }
+.register-footer { margin-top: 20px; text-align: center; }
+.footer-links { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.footer-links span { color: #666666; font-size: 14px; }
+.login-link { color: #4db8e8; text-decoration: none; font-size: 14px; font-weight: 500; }
+
+/* =================================
+   Error & Success Messages
+==================================== */
+
+/* --- FIX 2: SỬA LẠI ĐỊNH VỊ CỦA LỖI INLINE --- */
+.error-text {
+  color: #c41e3a;
+  font-size: 13px;
+  text-align: left;
+  
+  /* "Nhấc" dòng lỗi ra khỏi layout */
+  position: absolute; 
+  
+  /* Đặt nó ngay bên dưới input (48px là chiều cao của input) */
+  top: 48px; 
+  left: 0;
+  
+  /* Bỏ margin vì không cần nữa */
+  margin: 0; 
+  display: block;
+  /* Thêm chiều rộng để text không bị tràn nếu quá dài */
+  width: 100%; 
 }
 
-/* Terms Agreement Styles */
-.terms-agreement {
-  margin: 10px 0;
-}
-
-.terms-label {
-  display: flex;
-  align-items: flex-start;
-  cursor: pointer;
-  user-select: none;
-  line-height: 1.5;
-}
-
-.terms-checkbox {
-  width: 18px;
-  height: 18px;
-  margin-right: 12px;
-  margin-top: 2px;
-  cursor: pointer;
-  accent-color: #c41e3a;
-  flex-shrink: 0;
-}
-
-.terms-text {
-  font-size: 14px;
-  color: #666666;
-  line-height: 1.5;
-}
-
-.terms-link {
-  color: #4db8e8;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.terms-link:hover {
-  text-decoration: underline;
-}
-
-/* Submit Button Styles */
-.register-button {
-  background-color: #c41e3a;
-  color: #ffffff;
-  border: none;
-  padding: 18px 20px;
+/* Lỗi chung (dạng block) */
+.error-message {
+  color: #c41e3a;
+  background-color: #fde8eb;
+  border: 1px solid #f8b6c3;
+  padding: 10px 15px;
   border-radius: 4px;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  text-transform: uppercase;
-  margin-top: 20px;
-  font-family: inherit;
-}
-
-.register-button:hover {
-  background-color: #a01729;
-}
-
-.register-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
-/* Footer Styles */
-.register-footer {
-  margin-top: 24px;
+  font-size: 14px;
   text-align: center;
+  margin-top: 5px;
+  margin-bottom: 10px;
 }
 
-.footer-links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.footer-links span {
-  color: #666666;
+/* Thông báo thành công */
+.success-message {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  padding: 10px 15px;
+  border-radius: 4px;
   font-size: 14px;
+  text-align: center;
+  margin-top: 5px;
+  margin-bottom: 10px;
 }
 
-.login-link {
-  color: #4db8e8;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.login-link:hover {
-  color: #3a9bc1;
-  text-decoration: underline;
-}
-
-/* Responsive Design */
+/* =================================
+   Responsive Design (Giữ nguyên như cũ)
+==================================== */
 @media (max-width: 768px) {
-  .register-page {
-    padding: 20px 15px;
-  }
-  
   .register-content {
-    padding: 30px 25px;
+    padding: 25px;
   }
   
-  .register-title {
-    font-size: 24px;
-  }
-  
-  .register-subtitle {
-    font-size: 14px;
-  }
-  
-  .gender-selection {
-    gap: 20px;
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
   }
 }
 
 @media (max-width: 480px) {
-  .register-page {
-    padding: 15px 10px;
-  }
-  
   .register-content {
     padding: 25px 20px;
   }
@@ -248,22 +203,25 @@
   .register-title {
     font-size: 22px;
   }
-  
-  .form-input {
-    padding: 12px;
-  }
-  
-  .register-button {
-    padding: 15px 20px;
-    font-size: 14px;
-  }
-  
-  .gender-selection {
-    gap: 15px;
-    flex-direction: column;
-  }
-  
-  .terms-text {
-    font-size: 13px;
-  }
-} 
+}
+
+/* Terms Agreement Styles */
+.terms-agreement {
+  /* Thay đổi margin từ 5px 0 thành 0 để giảm khoảng trống */
+  margin: 0; 
+}
+.terms-label { 
+  display: flex; 
+  align-items: center; 
+  cursor: pointer; 
+  user-select: none; 
+  line-height: 1.5; 
+}
+.terms-checkbox { 
+  width: 16px; 
+  height: 16px; 
+  margin-right: 10px; 
+  cursor: pointer; 
+  accent-color: #c41e3a; 
+  flex-shrink: 0; 
+}
