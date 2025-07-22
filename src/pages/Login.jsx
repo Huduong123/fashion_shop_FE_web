@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+// ĐÃ THÊM: Import icon mắt từ thư viện react-icons
+import { FiEye, FiEyeOff } from 'react-icons/fi'; 
 import { useAuth } from '../contexts/AuthContext';
 import authService from '../services/authService';
 import './Login.css';
@@ -8,38 +10,51 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   
-  // ĐÃ THAY ĐỔI: Chuyển state từ 'email' sang 'username'
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   });
 
-  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // Handle input change (hàm này không cần đổi)
+  // ĐÃ THÊM: State để quản lý việc hiển thị/ẩn mật khẩu
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  // Xử lý khi người dùng nhập liệu
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-    setError(null);
-  };
-
-  // ĐÃ THAY ĐỔI: Cập nhật hàm validate cho username
-  const validateForm = () => {
-    if (!formData.username || !formData.password) {
-      setError('Tên đăng nhập và mật khẩu không được để trống.');
-      return false;
+    if (errors[name] || errors.general) {
+      setErrors(prev => ({ ...prev, [name]: null, general: null }));
     }
-    return true;
   };
 
-  // Handle form submission
+  // ĐÃ THÊM: Hàm để bật/tắt hiển thị mật khẩu
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(prev => !prev);
+  };
+
+  // Kiểm tra các trường có bị bỏ trống hay không
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.username.trim()) {
+      newErrors.username = 'Tên đăng nhập không được để trống.';
+    }
+    if (!formData.password.trim()) {
+      newErrors.password = 'Mật khẩu không được để trống.';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Xử lý khi gửi form đăng nhập
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    setErrors({});
 
     if (!validateForm()) {
       return;
@@ -48,8 +63,6 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // ĐÃ THAY ĐỔI: authService.login giờ sẽ nhận { username, password }
-      // DTO (Data Transfer Object) này phải khớp với những gì backend UserLoginDTO mong đợi
       const userData = await authService.login({
         username: formData.username,
         password: formData.password
@@ -64,7 +77,8 @@ const Login = () => {
 
     } catch (error) {
       console.error('Login failed:', error);
-      setError(error.message || 'Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.');
+      const errorMessage = error.response?.data?.message || 'Tài khoản hoặc mật khẩu không chính xác.';
+      setErrors({ general: errorMessage });
       
     } finally {
       setIsLoading(false);
@@ -77,32 +91,42 @@ const Login = () => {
         <div className="login-card">
           <h1 className="login-title">Đăng nhập</h1>
           
-          <form onSubmit={handleSubmit} className="login-form">
-            {error && <div className="error-message-general">{error}</div>}
+          <form onSubmit={handleSubmit} className="login-form" noValidate>
 
-            {/* ĐÃ THAY ĐỔI: Input cho username */}
+            {errors.general && <span className="error-message general-error">{errors.general}</span>}
+
+            {/* Trường Tên đăng nhập */}
             <div className="form-group">
               <input
-                type="text" // Đổi từ "email" sang "text"
-                name="username" // Đổi từ "email" sang "username"
-                placeholder="Tên đăng nhập" // Đổi placeholder
+                type="text"
+                name="username"
+                placeholder="Tên đăng nhập"
                 value={formData.username}
                 onChange={handleInputChange}
-                className="form-input"
+                className={`form-input ${errors.username ? 'error' : ''}`}
                 required
               />
+              {errors.username && <span className="error-message">{errors.username}</span>}
             </div>
 
+            {/* ĐÃ THAY ĐỔI: Cập nhật trường Mật khẩu */}
             <div className="form-group">
               <input
-                type="password"
+                // Thay đổi type dựa vào state isPasswordVisible
+                type={isPasswordVisible ? 'text' : 'password'}
                 name="password"
                 placeholder="Mật khẩu"
                 value={formData.password}
                 onChange={handleInputChange}
-                className="form-input"
+                className={`form-input ${errors.password ? 'error' : ''}`}
                 required
               />
+              {/* Thêm icon vào đây */}
+              <span className="password-toggle-icon" onClick={togglePasswordVisibility}>
+                {isPasswordVisible ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+              </span>
+
+              {errors.password && <span className="error-message">{errors.password}</span>}
             </div>
 
             <div className="recaptcha-notice">
