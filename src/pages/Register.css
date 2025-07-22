@@ -225,3 +225,26 @@
   accent-color: #c41e3a; 
   flex-shrink: 0; 
 }
+
+/* Style cho icon hiển thị/ẩn mật khẩu */
+.password-toggle-icon {
+  position: absolute;
+  
+  /* Căn icon vào giữa theo chiều dọc bên trong input cao 48px */
+  /* Do input cao 48px, top 50% sẽ bị lệch một chút vì lỗi inline. Đặt top cố định sẽ chuẩn hơn */
+  top: 15px; 
+  
+  /* Đặt icon ở bên phải, căn lề tương ứng với padding của input */
+  right: 15px; 
+  
+  cursor: pointer;
+  color: #999999; /* Màu xám giống placeholder */
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+/* Thay đổi màu khi di chuột qua icon */
+.password-toggle-icon:hover {
+  color: #333333;
+}
