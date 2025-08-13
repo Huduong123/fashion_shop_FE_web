@@ -8,7 +8,18 @@ const userService = {
   getUserProfile: async () => {
     try {
       const response = await api.get('/users/profile');
-      return response.data;
+      const userData = response.data;
+      
+      // Convert date format from backend (dd/MM/yyyy) to frontend (YYYY-MM-DD)
+      if (userData.birthday && typeof userData.birthday === 'string') {
+        // If it's in dd/MM/yyyy format
+        if (userData.birthday.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+          const [day, month, year] = userData.birthday.split('/');
+          userData.birthday = `${year}-${month}-${day}`;
+        }
+      }
+      
+      return userData;
     } catch (error) {
       console.error('Error fetching user profile:', error.response || error);
       throw error;
@@ -22,7 +33,24 @@ const userService = {
    */
   updateUserProfile: async (userData) => {
     try {
-      const response = await api.put('/users/profile', userData);
+      // Create a new object for the API call
+      const requestData = { ...userData };
+      
+      // Format birthday to match backend expectation (dd/MM/yyyy)
+      if (requestData.birthday) {
+        // If it's already in ISO format (YYYY-MM-DD), convert it
+        if (typeof requestData.birthday === 'string' && requestData.birthday.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          const [year, month, day] = requestData.birthday.split('-');
+          requestData.birthday = `${day}/${month}/${year}`;
+        }
+      }
+      
+      // Handle the backend's @JsonProperty("birth_day") annotation
+      // We need to send as birth_day but use birthday in our frontend
+      requestData.birth_day = requestData.birthday;
+      delete requestData.birthday;
+      
+      const response = await api.put('/users/profile', requestData);
       return response.data;
     } catch (error) {
       console.error('Error updating user profile:', error.response || error);

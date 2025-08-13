@@ -4,14 +4,14 @@ import userService from '../../../services/userService';
 import './AccountProfile.css';
 
 const AccountProfile = () => {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   
   const [formData, setFormData] = useState({
-    fullName: '',
+    fullname: '',
     gender: '',
     email: '',
     phone: '',
-    birthDate: ''
+    birthday: ''
   });
   
   const [loading, setLoading] = useState(true);
@@ -27,11 +27,11 @@ const AccountProfile = () => {
         
         // Map the backend data to our form fields
         setFormData({
-          fullName: profileData.fullname || '',
+          fullname: profileData.fullname || '',
           gender: profileData.gender || 'male',
           email: profileData.email || '',
           phone: profileData.phone || '',
-          birthDate: profileData.birthday || ''
+          birthday: profileData.birthday || ''
         });
         
         setError(null);
@@ -58,6 +58,32 @@ const AccountProfile = () => {
     e.preventDefault();
     
     try {
+      // Client-side validation
+      if (!formData.email) {
+        setError('Email không được để trống');
+        return;
+      }
+      if (!formData.email.match(/^[\w.+\-]+@gmail\.com$/)) {
+        setError('Email phải đúng định dạng @gmail.com');
+        return;
+      }
+      if (!formData.fullname || formData.fullname.length < 6) {
+        setError('Họ và tên phải trên 5 ký tự');
+        return;
+      }
+      if (!formData.phone || !formData.phone.match(/^0\d{9}$/)) {
+        setError('Số điện thoại phải đúng định dạng 0xxxxxxxxx');
+        return;
+      }
+      if (!formData.gender) {
+        setError('Vui lòng chọn giới tính');
+        return;
+      }
+      if (!formData.birthday) {
+        setError('Vui lòng chọn ngày sinh');
+        return;
+      }
+
       setLoading(true);
       setError(null);
       setSuccessMessage('');
@@ -65,13 +91,15 @@ const AccountProfile = () => {
       // Map form data to match backend DTO format
       const updateData = {
         email: formData.email,
-        fullname: formData.fullName,
+        fullname: formData.fullname,
         phone: formData.phone,
         gender: formData.gender || 'male', // Default to male if empty
-        birthday: formData.birthDate
+        birthday: formData.birthday
       };
       
-      await userService.updateUserProfile(updateData);
+      const updatedProfile = await userService.updateUserProfile(updateData);
+      // Update the user data in Auth context
+      login(updatedProfile);
       setSuccessMessage('Cập nhật thông tin thành công!');
     } catch (err) {
       console.error('Failed to update profile:', err);
@@ -117,8 +145,8 @@ const AccountProfile = () => {
               <label className="form-label">Họ và tên</label>
               <input
                 type="text"
-                name="fullName"
-                value={formData.fullName}
+                name="fullname"
+                value={formData.fullname}
                 onChange={handleInputChange}
                 className="form-input"
                 required
@@ -185,8 +213,8 @@ const AccountProfile = () => {
               <label className="form-label">Ngày sinh</label>
               <input
                 type="date"
-                name="birthDate"
-                value={formData.birthDate || ''}
+                name="birthday"
+                value={formData.birthday || ''}
                 onChange={handleInputChange}
                 className="form-input date-input"
               />
