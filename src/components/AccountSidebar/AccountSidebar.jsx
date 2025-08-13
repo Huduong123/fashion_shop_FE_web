@@ -11,9 +11,8 @@ import {
   FaSignOutAlt 
 } from 'react-icons/fa';
 import './AccountSidebar.css';
-
+import Logo from '../../assets/images/logo/logo1.jpg';
 // URL logo của John Henry để làm ví dụ
-const logoUrl = 'https://file.hstatic.net/1000353426/file/logo-john-henry-09_1a3c6319807548a29b400a581432f9c4.png';
 
 const AccountSidebar = () => {
   const location = useLocation();
@@ -58,13 +57,13 @@ const AccountSidebar = () => {
       {/* Logo */}
       <div className="sidebar-logo">
         {/* Thay thế logoUrl bằng logo của bạn */}
-        <img src={logoUrl} alt="Brand Logo" className="logo-image" />
+        <img src={Logo} alt="Brand Logo" className="logo-image" />
       </div>
 
       {/* User Info */}
       <div className="user-info">
-        <div className="user-name">{user?.name || 'Nguyễn Tư'}</div>
-        <div className="user-email">{user?.email || 'nguyentuanh09788@gmail.com'}</div>
+        <div className="user-name">{user?.fullname || 'Nguyễn Tư'}</div>
+        <div className="user-email">{user?.email || 'trungdghia2@gmail.com'}</div>
         <div className="user-points">
           <span>Điểm: </span>
           <span className="points-value">0</span>

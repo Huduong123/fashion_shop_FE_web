@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import authService from '../services/authService';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import './Register.css';
 
@@ -61,35 +61,61 @@ const Register = () => {
     setErrors({});
     setSuccessMessage('');
 
+    // Format birthDate to ISO string (YYYY-MM-DD) to match Java LocalDate format
+    const formattedBirthDate = formData.birthDate ? formData.birthDate : null;
+    
     const payload = {
       username: formData.username,
       password: formData.password,
       email: formData.email,
       fullname: formData.fullName,
-      phone: formData.phone
+      phone: formData.phone,
+      gender: formData.gender,
+      birthDate: formattedBirthDate
     };
 
     try {
-      const API_URL = 'http://localhost:8080/api/users/register';
-      const response = await axios.post(API_URL, payload);
+      const response = await authService.register(payload);
 
-      if (response.status === 200) {
+      if (response) {
         setSuccessMessage('Đăng ký thành công! Bạn sẽ được chuyển đến trang đăng nhập trong giây lát...');
         setTimeout(() => navigate('/login'), 3000);
       }
     } catch (err) {
-      // =============================================================
-      // === ĐÂY LÀ PHẦN SỬA LỖI QUAN TRỌNG NHẤT ===
-      // =============================================================
       const errorData = err.response?.data;
+      const backendErrors = {};
 
-      // Kiểm tra xem có key "message" (dạng chuỗi) hay không
-      if (errorData && typeof errorData.message === 'string') {
+      // Handle validation errors (MethodArgumentNotValidException)
+      if (errorData && Array.isArray(errorData.messages) && errorData.messages.length > 0) {
+        // Process each validation error message
+        errorData.messages.forEach(message => {
+          const lowerCaseMsg = message.toLowerCase();
+          
+          // Map validation errors to specific form fields
+          if (lowerCaseMsg.includes('username')) {
+            backendErrors.username = message;
+          } else if (lowerCaseMsg.includes('email')) {
+            backendErrors.email = message;
+          } else if (lowerCaseMsg.includes('phone') || lowerCaseMsg.includes('số điện thoại')) {
+            backendErrors.phone = message;
+          } else if (lowerCaseMsg.includes('password') || lowerCaseMsg.includes('mật khẩu')) {
+            backendErrors.password = message;
+          } else if (lowerCaseMsg.includes('fullname') || lowerCaseMsg.includes('họ và tên')) {
+            backendErrors.fullName = message;
+          } else {
+            // If error doesn't match any specific field, show as general error
+            backendErrors.general = message;
+          }
+        });
+        
+        setErrors(backendErrors);
+      } 
+      // Handle single message errors (IllegalArgumentException, etc.)
+      else if (errorData && typeof errorData.message === 'string') {
         const msg = errorData.message;
         const lowerCaseMsg = msg.toLowerCase();
-        const backendErrors = {};
 
-        // Phân loại lỗi và gán vào đúng trường input
+        // Map single errors to specific fields
         if (lowerCaseMsg.includes('username')) {
           backendErrors.username = msg;
         } else if (lowerCaseMsg.includes('email')) {
@@ -99,17 +125,15 @@ const Register = () => {
         } else if (lowerCaseMsg.includes('password')) {
           backendErrors.password = msg;
         } else {
-          // Nếu lỗi không thuộc các trường trên, hiển thị lỗi chung
           backendErrors.general = msg;
         }
+        
         setErrors(backendErrors);
-      } else {
-        // Nếu không có định dạng lỗi nào khớp, hiển thị thông báo mặc định
+      } 
+      // Fallback for unknown error format
+      else {
         setErrors({ general: "Đã có lỗi không xác định xảy ra. Vui lòng thử lại." });
       }
-      // =============================================================
-      // === KẾT THÚC PHẦN SỬA LỖI ===
-      // =============================================================
     } finally {
       setIsLoading(false);
     }

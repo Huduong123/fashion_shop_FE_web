@@ -1,17 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
+import userService from '../../../services/userService';
 import './AccountProfile.css';
 
 const AccountProfile = () => {
   const { user } = useAuth();
   
   const [formData, setFormData] = useState({
-    fullName: user?.name || 'Nguyễn Tư',
-    gender: 'male',
-    email: user?.email || 'nguyentuanh09788@gmail.com',
+    fullName: '',
+    gender: '',
+    email: '',
     phone: '',
-    birthDate: '2003-12-29'
+    birthDate: ''
   });
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        setLoading(true);
+        const profileData = await userService.getUserProfile();
+        
+        // Map the backend data to our form fields
+        setFormData({
+          fullName: profileData.fullname || '',
+          gender: profileData.gender || 'male',
+          email: profileData.email || '',
+          phone: profileData.phone || '',
+          birthDate: profileData.birthday || ''
+        });
+        
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch user profile:', err);
+        setError('Không thể tải thông tin người dùng. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUserProfile();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -21,10 +54,38 @@ const AccountProfile = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Profile updated:', formData);
-    alert('Cập nhật thông tin thành công!');
+    
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccessMessage('');
+      
+      // Map form data to match backend DTO format
+      const updateData = {
+        email: formData.email,
+        fullname: formData.fullName,
+        phone: formData.phone,
+        gender: formData.gender || 'male', // Default to male if empty
+        birthday: formData.birthDate
+      };
+      
+      await userService.updateUserProfile(updateData);
+      setSuccessMessage('Cập nhật thông tin thành công!');
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+      
+      // Handle detailed validation errors from backend
+      if (err.response?.data?.messages && Array.isArray(err.response.data.messages)) {
+        const errorMessages = err.response.data.messages.join(', ');
+        setError(errorMessages);
+      } else {
+        setError(err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,8 +101,16 @@ const AccountProfile = () => {
         {/* Page Title */}
         <h1 className="page-title">Thông tin tài khoản</h1>
 
+        {/* Loading indicator */}
+        {loading && (
+          <div className="loading-container">
+            <div className="spinner"></div>
+          </div>
+        )}
+        
         {/* Profile Form */}
-        <form onSubmit={handleSubmit} className="profile-form">
+        {!loading && (
+          <form onSubmit={handleSubmit} className="profile-form">
           <div className="form-content">
             {/* Full Name */}
             <div className="form-group">
@@ -117,20 +186,25 @@ const AccountProfile = () => {
               <input
                 type="date"
                 name="birthDate"
-                value={formData.birthDate}
+                value={formData.birthDate || ''}
                 onChange={handleInputChange}
                 className="form-input date-input"
               />
             </div>
 
+            {/* Error and success messages */}
+            {error && <div className="error-message">{error}</div>}
+            {successMessage && <div className="success-message">{successMessage}</div>}
+            
             {/* Submit Button */}
             <div className="form-actions">
-              <button type="submit" className="update-btn">
-                Cập nhật
+              <button type="submit" className="update-btn" disabled={loading}>
+                {loading ? 'Đang xử lý...' : 'Cập nhật'}
               </button>
             </div>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

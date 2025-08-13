@@ -95,7 +95,10 @@ export const CartProvider = ({ children }) => {
         await cartService.addToCart(newItem);
         await syncCart(); // Tải lại toàn bộ giỏ hàng để đảm bảo nhất quán
       } catch (error) {
-        alert("Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
+        // Hiển thị thông báo lỗi từ backend nếu có
+        const errorMessage = error.response?.data?.message || "Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.";
+        alert(errorMessage);
+        throw error; // Ném lại lỗi để component có thể xử lý
       }
     } else {
       // Logic cho khách (localStorage)
