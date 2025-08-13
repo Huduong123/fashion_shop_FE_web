@@ -1,49 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
 import './Payment.css';
 
 const Payment = () => {
   const navigate = useNavigate();
   
-  // Mock data cho giỏ hàng (giống như trong Cart)
-  const cartItems = [
-    {
-      id: 1,
-      name: "Quần Short Nam Nâng Đồng SP25FH32P-AK",
-      color: "GREY",
-      size: "XXL",
-      quantity: 1,
-      price: 600000,
-      image: "/uploads/product1.webp"
-    },
-    {
-      id: 2,
-      name: "Áo Khoác Nam Thời Trang JK25SSO1T-PA",
-      color: "LIGHT GREY",
-      size: "S",
-      quantity: 1,
-      price: 1200000,
-      image: "/uploads/product2.webp"
-    },
-    {
-      id: 3,
-      name: "Áo Khoác Nam Thời Trang JK25SSO1T-PA",
-      color: "LIGHT GREY",
-      size: "XL",
-      quantity: 1,
-      price: 1200000,
-      image: "/uploads/product3.webp"
-    },
-    {
-      id: 4,
-      name: "Áo Polo Nam Tay Ngắn Form Vừa KS25SS16C-SCHE",
-      color: "WHITE",
-      size: "2XL",
-      quantity: 1,
-      price: 980000,
-      image: "/uploads/product4.webp"
-    }
-  ];
+  // Lấy dữ liệu giỏ hàng từ context
+  const { cartItems, totalAmount } = useCart();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -60,14 +24,14 @@ const Payment = () => {
   const [discountCode, setDiscountCode] = useState('');
 
   // Tính toán
-  const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const subtotal = totalAmount;
   const shippingFee = 0; // Free shipping
   const discount = 0;
   const total = subtotal - discount + shippingFee;
 
   // Format số tiền
   const formatPrice = (price) => {
-    return price.toLocaleString('vi-VN') + 'đ';
+    return (price || 0).toLocaleString('vi-VN') + 'đ';
   };
 
   // Handle form input

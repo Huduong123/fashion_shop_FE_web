@@ -1,36 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 // Import các icon cần thiết từ thư viện react-icons
 import { 
   FaMapMarkerAlt, 
   FaPhone, 
   FaPlus, 
-  FaCheck 
+  FaCheck,
+  FaSpinner
 } from 'react-icons/fa';
 // Import icon PNG files
 import EditIcon from '../../../assets/images/icons/edit.png';
 import DeleteIcon from '../../../assets/images/icons/delete.png';
 import './AccountAddresses.css';
+import userService from '../../../services/userService';
 
 const AccountAddresses = () => {
   const { user } = useAuth();
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      name: 'Nguyễn Tư',
-      address: '123 Đường ABC, Phường 1, Quận 1, TP. Hồ Chí Minh',
-      phone: '0763554774',
-      isDefault: true
-    },
-    {
-      id: 2,
-      name: 'Ba TE',
-      address: '456 Bùi Quang Là, Phường 12, Quận Gò Vấp, TP. Hồ Chí Minh',
-      phone: '025874147',
-      isDefault: false
+  const [showForm, setShowForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [addresses, setAddresses] = useState([]);
+  const [editingAddressId, setEditingAddressId] = useState(null);
+  
+  // Fetch addresses from the backend
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        setIsLoading(true);
+        const addressesData = await userService.getUserAddresses();
+        setAddresses(addressesData.map(address => ({
+          id: address.id,
+          name: address.recipientName,
+          address: address.addressDetail,
+          phone: address.phoneNumber,
+          isDefault: address.isDefault
+        })));
+        setError(null);
+      } catch (error) {
+        console.error('Failed to fetch addresses:', error);
+        setError('Không thể lấy danh sách địa chỉ. Vui lòng thử lại sau.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchAddresses();
     }
-  ]);
+  }, [user]);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -40,6 +57,35 @@ const AccountAddresses = () => {
     phone: '',
     isDefault: false
   });
+  
+  // Function to parse an address into first and last name, street address, and province
+  const parseAddress = (fullName, addressDetail) => {
+    // Parse full name into first and last name
+    const nameParts = fullName.split(' ');
+    let firstName = '';
+    let lastName = '';
+    
+    if (nameParts.length === 1) {
+      lastName = nameParts[0];
+    } else if (nameParts.length > 1) {
+      lastName = nameParts.pop();
+      firstName = nameParts.join(' ');
+    }
+    
+    // Parse address detail into street address and province
+    const addressParts = addressDetail.split(', ');
+    let province = '';
+    let streetAddress = '';
+    
+    if (addressParts.length > 1) {
+      province = addressParts.pop();
+      streetAddress = addressParts.join(', ');
+    } else {
+      streetAddress = addressDetail;
+    }
+    
+    return { firstName, lastName, streetAddress, province };
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -49,45 +95,126 @@ const AccountAddresses = () => {
     }));
   };
 
-  const handleAddAddress = (e) => {
+  // Handle form submission for both adding and editing addresses
+  const handleSubmitAddress = async (e) => {
     e.preventDefault();
     
-    const newAddress = {
-      id: addresses.length + 1,
-      name: `${formData.firstName} ${formData.lastName}`,
-      address: `${formData.address}, ${formData.province}`,
-      phone: formData.phone,
-      isDefault: formData.isDefault
-    };
+    try {
+      // Common data preparation for both adding and updating
+      const addressData = {
+        recipientName: `${formData.firstName} ${formData.lastName}`.trim(),
+        addressDetail: `${formData.address}, ${formData.province}`,
+        phoneNumber: formData.phone,
+        isDefault: formData.isDefault
+      };
 
-    if (formData.isDefault) {
-      // Set all other addresses to not default
-      setAddresses(prev => prev.map(addr => ({ ...addr, isDefault: false })));
+      let response;
+      
+      if (editingAddressId) {
+        // UPDATING EXISTING ADDRESS
+        response = await userService.updateUserAddress(editingAddressId, addressData);
+        
+        // Update the addresses list with the edited address
+        setAddresses(prev => prev.map(addr => 
+          addr.id === editingAddressId ? {
+            id: response.id,
+            name: response.recipientName,
+            address: response.addressDetail,
+            phone: response.phoneNumber,
+            isDefault: response.isDefault
+          } : (response.isDefault ? { ...addr, isDefault: false } : addr)
+        ));
+        
+        alert('Cập nhật địa chỉ thành công!');
+      } else {
+        // ADDING NEW ADDRESS
+        // Check if this is the user's first address
+        const isFirstAddress = addresses.length === 0;
+        
+        // Automatically set as default if it's the first address
+        if (isFirstAddress) {
+          addressData.isDefault = true;
+        }
+        
+        // Call API to create address
+        response = await userService.createUserAddress(addressData);
+        
+        // Create the new address object
+        const newAddress = {
+          id: response.id,
+          name: response.recipientName,
+          address: response.addressDetail,
+          phone: response.phoneNumber,
+          isDefault: response.isDefault
+        };
+
+        // If new address is default, update all other addresses locally
+        if (response.isDefault) {
+          setAddresses(prev => prev.map(addr => ({ ...addr, isDefault: false })));
+        }
+
+        // Add the new address to the list
+        setAddresses(prev => [...prev, newAddress]);
+        
+        alert('Thêm địa chỉ thành công!');
+      }
+      
+      // Reset form and close
+      setFormData({
+        firstName: '',
+        lastName: '',
+        address: '',
+        province: '',
+        phone: '',
+        isDefault: false
+      });
+      setShowForm(false);
+      setEditingAddressId(null);
+      
+    } catch (error) {
+      console.error('Failed to save address:', error);
+      alert(`Không thể ${editingAddressId ? 'cập nhật' : 'thêm'} địa chỉ. Vui lòng thử lại sau.`);
     }
-
-    setAddresses(prev => [...prev, newAddress]);
-    
-    // Reset form and close
-    setFormData({
-      firstName: '',
-      lastName: '',
-      address: '',
-      province: '',
-      phone: '',
-      isDefault: false
-    });
-    setShowAddForm(false);
-    
-    alert('Thêm địa chỉ thành công!');
   };
   
-  const handleDeleteAddress = (id) => {
+  const handleDeleteAddress = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) {
-      setAddresses(prev => prev.filter(addr => addr.id !== id));
+      try {
+        // Call API to delete address
+        await userService.deleteUserAddress(id);
+        
+        // Update local state after successful deletion
+        setAddresses(prev => prev.filter(addr => addr.id !== id));
+        alert('Xóa địa chỉ thành công!');
+      } catch (error) {
+        console.error('Failed to delete address:', error);
+        alert('Không thể xóa địa chỉ. Vui lòng thử lại sau.');
+      }
     }
   };
 
-  const handleCancelAdd = () => {
+  // Function to handle edit button click
+  const handleEditClick = (address) => {
+    // Parse the address details
+    const { firstName, lastName, streetAddress, province } = parseAddress(address.name, address.address);
+    
+    // Set form data with current address values
+    setFormData({
+      firstName,
+      lastName,
+      address: streetAddress,
+      province,
+      phone: address.phone,
+      isDefault: address.isDefault
+    });
+    
+    // Set editing state
+    setEditingAddressId(address.id);
+    setShowForm(true);
+  };
+  
+  // Reset form and exit edit/add mode
+  const handleCancelForm = () => {
     // Reset form fields
     setFormData({
       firstName: '',
@@ -97,70 +224,122 @@ const AccountAddresses = () => {
       phone: '',
       isDefault: false
     });
-    setShowAddForm(false);
+    setShowForm(false);
+    setEditingAddressId(null);
   };
 
   return (
     <div className="account-address-container">
-      {!showAddForm ? (
+      {!showForm ? (
         // Address List View
         <div className="addresses-list-view">
           <h1 className="page-title">Địa chỉ của tôi</h1>
           
-          <div className="addresses-grid">
-            {addresses.map((address) => (
-              <div 
-                key={address.id} 
-                className={`address-card ${address.isDefault ? 'default' : ''}`}
+          {isLoading ? (
+            <div className="loading-container">
+              <FaSpinner className="loading-spinner" />
+              <p>Đang tải danh sách địa chỉ...</p>
+            </div>
+          ) : error ? (
+            <div className="error-container">
+              <p className="error-message">{error}</p>
+              <button 
+                className="retry-btn" 
+                onClick={() => {
+                  setError(null);
+                  setIsLoading(true);
+                  userService.getUserAddresses()
+                    .then(addressesData => {
+                      setAddresses(addressesData.map(address => ({
+                        id: address.id,
+                        name: address.recipientName,
+                        address: address.addressDetail,
+                        phone: address.phoneNumber,
+                        isDefault: address.isDefault
+                      })));
+                      setIsLoading(false);
+                    })
+                    .catch(err => {
+                      console.error('Failed to fetch addresses:', err);
+                      setError('Không thể lấy danh sách địa chỉ. Vui lòng thử lại sau.');
+                      setIsLoading(false);
+                    });
+                }}
               >
-                <div className="address-main">
-                  <div className="address-name">
-                    {address.name}
-                    {address.isDefault && (
-                      <span className="default-badge">
-                        <FaCheck /> Mặc định
-                      </span>
-                    )}
-                  </div>
-                  <div className="address-details">
-                    <div className="address-text">
-                      <span className="address-icon"><FaMapMarkerAlt /></span>
-                      {address.address}
+                Thử lại
+              </button>
+            </div>
+          ) : addresses.length === 0 ? (
+            <div className="no-addresses">
+              <p>Bạn chưa có địa chỉ nào.</p>
+              <button className="add-address-btn" onClick={() => setShowForm(true)}>
+                <FaPlus /> Thêm địa chỉ mới
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="addresses-grid">
+                {addresses.map((address) => (
+                  <div 
+                    key={address.id} 
+                    className={`address-card ${address.isDefault ? 'default' : ''}`}
+                  >
+                    <div className="address-main">
+                      <div className="address-name">
+                        {address.name}
+                        {address.isDefault && (
+                          <span className="default-badge">
+                            <FaCheck /> Mặc định
+                          </span>
+                        )}
+                      </div>
+                      <div className="address-details">
+                        <div className="address-text">
+                          <span className="address-icon"><FaMapMarkerAlt /></span>
+                          {address.address}
+                        </div>
+                        <div className="address-phone">
+                          <span className="address-icon"><FaPhone /></span>
+                          {address.phone}
+                        </div>
+                      </div>
                     </div>
-                    <div className="address-phone">
-                      <span className="address-icon"><FaPhone /></span>
-                      {address.phone}
+                    <div className="address-actions">
+                      <button 
+                        className="action-btn edit-btn" 
+                        title="Chỉnh sửa"
+                        onClick={() => handleEditClick(address)}
+                      >
+                        <img src={EditIcon} alt="Edit" />
+                      </button>
+                      {!address.isDefault && (
+                        <button 
+                          className="action-btn delete-btn" 
+                          title="Xóa"
+                          onClick={() => handleDeleteAddress(address.id)}
+                        >
+                          <img src={DeleteIcon} alt="Delete" />
+                        </button>
+                      )}
                     </div>
                   </div>
-                </div>
-                <div className="address-actions">
-                  <button className="action-btn edit-btn" title="Chỉnh sửa">
-                    <img src={EditIcon} alt="Edit" />
-                  </button>
-                  {!address.isDefault && (
-                    <button 
-                      className="action-btn delete-btn" 
-                      title="Xóa"
-                      onClick={() => handleDeleteAddress(address.id)}
-                    >
-                      <img src={DeleteIcon} alt="Delete" />
-                    </button>
-                  )}
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <button className="add-address-btn" onClick={() => setShowAddForm(true)}>
-            <FaPlus /> Thêm địa chỉ mới
-          </button>
+              <button className="add-address-btn" onClick={() => setShowForm(true)}>
+                <FaPlus /> Thêm địa chỉ mới
+              </button>
+            </>
+          )}
         </div>
       ) : (
-        // Add Address Form View
+        // Address Form View (Add or Edit)
         <div className="add-address-view">
-          <h1 className="page-title">Thêm địa chỉ mới</h1>
+          <h1 className="page-title">
+            {editingAddressId ? 'Chỉnh sửa địa chỉ' : 'Thêm địa chỉ mới'}
+          </h1>
 
-          <form onSubmit={handleAddAddress} className="add-address-form">
+          <form onSubmit={handleSubmitAddress} className="add-address-form">
             <div className="form-content">
               <div className="form-row">
                 <div className="form-group half">
@@ -209,21 +388,32 @@ const AccountAddresses = () => {
                 />
               </div>
               <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox" name="isDefault" checked={formData.isDefault}
-                    onChange={handleInputChange} className="checkbox-input"
-                  />
-                  <span className="checkbox-custom"></span>
-                  <span className="checkbox-text">Đặt làm địa chỉ mặc định</span>
-                </label>
+                {addresses.length === 0 && !editingAddressId ? (
+                  <div className="info-message">
+                    <span>Đây là địa chỉ đầu tiên của bạn và sẽ tự động được đặt làm địa chỉ mặc định</span>
+                  </div>
+                ) : (
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox" name="isDefault" checked={formData.isDefault}
+                      onChange={handleInputChange} className="checkbox-input"
+                      disabled={editingAddressId && addresses.find(a => a.id === editingAddressId)?.isDefault}
+                    />
+                    <span className="checkbox-custom"></span>
+                    <span className="checkbox-text">
+                      Đặt làm địa chỉ mặc định
+                      {editingAddressId && addresses.find(a => a.id === editingAddressId)?.isDefault && 
+                        " (Không thể bỏ chọn địa chỉ mặc định)"}
+                    </span>
+                  </label>
+                )}
               </div>
               <div className="form-actions">
-                <button type="button" onClick={handleCancelAdd} className="form-btn cancel-btn">
+                <button type="button" onClick={handleCancelForm} className="form-btn cancel-btn">
                   Hủy
                 </button>
                 <button type="submit" className="form-btn submit-btn">
-                  Thêm mới
+                  {editingAddressId ? 'Cập nhật' : 'Thêm mới'}
                 </button>
               </div>
             </div>
