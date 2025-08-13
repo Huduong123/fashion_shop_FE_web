@@ -71,6 +71,66 @@ const userService = {
       console.error('Error changing password:', error.response || error);
       throw error;
     }
+  },
+
+  /**
+   * Lấy danh sách địa chỉ của user đang đăng nhập
+   * @returns {Promise<Array>} - Danh sách các địa chỉ
+   */
+  getUserAddresses: async () => {
+    try {
+      const response = await api.get('/users/address');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user addresses:', error.response || error);
+      throw error;
+    }
+  },
+
+  /**
+   * Tạo địa chỉ mới cho user
+   * @param {object} addressData - Thông tin địa chỉ mới
+   * @returns {Promise<object>} - Địa chỉ đã tạo
+   */
+  createUserAddress: async (addressData) => {
+    try {
+      const response = await api.post('/users/address', addressData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating user address:', error.response || error);
+      throw error;
+    }
+  },
+
+  /**
+   * Cập nhật thông tin địa chỉ
+   * @param {number} addressId - ID của địa chỉ cần cập nhật
+   * @param {object} addressData - Thông tin địa chỉ cần cập nhật
+   * @returns {Promise<object>} - Địa chỉ đã cập nhật
+   */
+  updateUserAddress: async (addressId, addressData) => {
+    try {
+      const response = await api.put(`/users/address/${addressId}`, addressData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user address:', error.response || error);
+      throw error;
+    }
+  },
+
+  /**
+   * Xóa địa chỉ của user
+   * @param {number} addressId - ID của địa chỉ cần xóa
+   * @returns {Promise<object>} - Thông báo kết quả
+   */
+  deleteUserAddress: async (addressId) => {
+    try {
+      const response = await api.delete(`/users/address/${addressId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting user address:', error.response || error);
+      throw error;
+    }
   }
 };
 
