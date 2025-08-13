@@ -54,8 +54,8 @@ const ProductModal = ({ productId, isOpen, onClose }) => {
   // --- CÁC HÀM XỬ LÝ CỦA RIÊNG MODAL ---
 
   // Hàm này gọi hàm thêm vào giỏ từ hook, và nếu thành công thì đóng modal
-  const handleAddToCartAndClose = () => {
-    const wasAdded = addToCartFromHook(); // Gọi hàm từ hook, nhận lại kết quả true/false
+  const handleAddToCartAndClose = async () => {
+    const wasAdded = await addToCartFromHook(); // Gọi hàm từ hook, nhận lại kết quả true/false
     if (wasAdded) {
       onClose(); // Chỉ đóng modal nếu thêm thành công
     }
