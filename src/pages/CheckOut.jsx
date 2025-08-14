@@ -54,6 +54,7 @@ const CheckOut = () => {
           </div>
           <h1 className="success-title">Đặt hàng thành công</h1>
           <p className="order-id">Mã đơn hàng {orderData.orderId}</p>
+          <p className="order-status">Trạng thái: {orderData.orderInfo?.status || 'PENDING'}</p>
           <p className="success-message">Cảm ơn bạn đã mua hàng!</p>
         </div>
 
@@ -91,7 +92,7 @@ const CheckOut = () => {
               
               <div className="items-list">
                 {orderData.items.map((item, index) => (
-                  <div key={index} className="order-item">
+                  <div key={`${item.productVariantId}-${index}`} className="order-item">
                     <div className="item-image">
                       <img src={item.image} alt={item.name} />
                       <span className="item-quantity">{item.quantity}</span>
@@ -101,7 +102,7 @@ const CheckOut = () => {
                       <p className="item-variant">{item.color} / {item.size}</p>
                     </div>
                     <div className="item-price">
-                      {formatPrice(item.price * item.quantity)}
+                      {formatPrice(item.totalPrice || (item.price * item.quantity))}
                     </div>
                   </div>
                 ))}
@@ -111,7 +112,7 @@ const CheckOut = () => {
               <div className="order-total-section">
                 <div className="total-row">
                   <span className="total-label">Tạm tính:</span>
-                  <span className="total-value">{formatPrice(orderData.subtotal)}</span>
+                  <span className="total-value">{formatPrice(orderData.subtotal || orderData.orderInfo?.totalPrice)}</span>
                 </div>
                 <div className="total-row">
                   <span className="total-label">Phí vận chuyển:</span>
@@ -127,7 +128,17 @@ const CheckOut = () => {
                 )}
                 <div className="total-row final-total">
                   <span className="total-label">Tổng cộng:</span>
-                  <span className="total-value">{formatPrice(orderData.total)}</span>
+                  <span className="total-value">{formatPrice(orderData.total || orderData.orderInfo?.totalPrice)}</span>
+                </div>
+                
+                {/* Order Metadata */}
+                <div className="order-metadata">
+                  <p className="order-date">
+                    Ngày đặt: {new Date(orderData.orderDate || orderData.orderInfo?.createdAt).toLocaleDateString('vi-VN')}
+                  </p>
+                  <p className="order-id-detail">
+                    ID đơn hàng: {orderData.orderInfo?.id}
+                  </p>
                 </div>
               </div>
             </div>
