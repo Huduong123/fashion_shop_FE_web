@@ -1,38 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
+import userService from '../services/userService';
+import orderService from '../services/orderService';
 import './Payment.css';
 
 const Payment = () => {
   const navigate = useNavigate();
   
   // Lấy dữ liệu giỏ hàng từ context
-  const { cartItems, totalAmount } = useCart();
+  const { cartItems, totalAmount, clearCart } = useCart();
+  
+  // Lấy thông tin authentication
+  const { isAuthenticated, user, logout } = useAuth();
 
   // Form state
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
-    address: '',
-    province: '',
-    district: '',
-    ward: ''
+    address: ''
   });
 
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [discountCode, setDiscountCode] = useState('');
+  
+  // State cho địa chỉ người dùng
+  const [userAddresses, setUserAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('');
+  
+  // State cho loading khi tạo đơn hàng
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
   // Tính toán
   const subtotal = totalAmount;
   const shippingFee = 0; // Free shipping
   const discount = 0;
+
   const total = subtotal - discount + shippingFee;
 
   // Format số tiền
   const formatPrice = (price) => {
     return (price || 0).toLocaleString('vi-VN') + 'đ';
   };
+
+  // Fetch user addresses when component mounts and set default address
+  useEffect(() => {
+    const fetchUserAddresses = async () => {
+      if (isAuthenticated) {
+        try {
+          const addresses = await userService.getUserAddresses();
+          setUserAddresses(addresses);
+
+          // --- BẮT ĐẦU THAY ĐỔI ---
+          // Tìm địa chỉ mặc định trong danh sách
+          const defaultAddress = addresses.find(addr => addr.isDefault);
+
+          // Nếu có địa chỉ mặc định, tự động điền thông tin
+          if (defaultAddress) {
+            // Cập nhật form với thông tin từ địa chỉ mặc định
+            setFormData(prev => ({
+              ...prev, // Giữ lại email đã được điền từ useEffect khác
+              fullName: defaultAddress.recipientName,
+              phone: defaultAddress.phoneNumber,
+              address: defaultAddress.addressDetail
+            }));
+            
+            // Cập nhật ID của địa chỉ được chọn để hiển thị đúng trên dropdown
+            setSelectedAddressId(defaultAddress.id);
+          }
+          // --- KẾT THÚC THAY ĐỔI ---
+
+        } catch (error) {
+          console.error('Failed to fetch user addresses:', error);
+        }
+      }
+    };
+
+    fetchUserAddresses();
+  }, [isAuthenticated]); // Dependency không đổi
+
+  // Pre-fill email if user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user && user.email && !formData.email) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email
+      }));
+    }
+  }, [isAuthenticated, user, formData.email]);
 
   // Handle form input
   const handleInputChange = (e) => {
@@ -48,23 +105,104 @@ const Payment = () => {
     setPaymentMethod(method);
   };
 
+  // Handle address selection
+  const handleAddressSelection = (addressId) => {
+    setSelectedAddressId(addressId);
+    
+    if (addressId) {
+      const selectedAddress = userAddresses.find(addr => addr.id === parseInt(addressId));
+      if (selectedAddress) {
+                 setFormData(prev => ({
+           ...prev,
+           fullName: selectedAddress.recipientName,
+           email: prev.email || (user && user.email) || '',
+           phone: selectedAddress.phoneNumber,
+           address: selectedAddress.addressDetail
+         }));
+      }
+    }
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   // Handle discount code
   const handleApplyDiscount = () => {
     // Logic áp dụng mã giảm giá
-    console.log('Apply discount code:', discountCode);
+    // TODO: Implement discount code logic
   };
 
   // Handle order completion
-  const handleCompleteOrder = () => {
+  const handleCompleteOrder = async () => {
     // Validate form
     if (!formData.fullName || !formData.email || !formData.phone || !formData.address) {
       alert('Vui lòng điền đầy đủ thông tin giao hàng');
       return;
     }
 
-    // Process order
-    console.log('Complete order with data:', { formData, paymentMethod, cartItems });
-    alert('Đặt hàng thành công!');
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      alert('Vui lòng đăng nhập để tiếp tục đặt hàng');
+      navigate('/login');
+      return;
+    }
+
+    // Check if cart is empty
+    if (!cartItems || cartItems.length === 0) {
+      alert('Giỏ hàng của bạn đang trống');
+      return;
+    }
+
+    setIsCreatingOrder(true);
+    
+    try {
+      // Call backend API to create order from cart
+      const backendOrderResponse = await orderService.createOrderFromCart();
+      
+      // Clear the cart after successful order creation
+      await clearCart();
+
+      // Prepare order data for checkout page (using backend response)
+      const orderData = {
+        orderId: `#${backendOrderResponse.id}`,
+        customerInfo: {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address
+        },
+        paymentMethod: paymentMethod,
+        items: backendOrderResponse.orderItems.map(item => ({
+          id: item.productVariantId,
+          name: item.productName,
+          color: item.colorName,
+          size: item.sizeName,
+          quantity: item.quantity,
+          price: item.price,
+          image: item.imageUrl
+        })),
+        total: backendOrderResponse.totalPrice,
+        shippingFee: shippingFee,
+        discount: discount,
+        subtotal: backendOrderResponse.totalPrice,
+        orderDate: backendOrderResponse.createdAt
+      };
+
+      // Navigate to checkout page with order data
+      navigate('/checkout', { state: { orderData } });
+      
+    } catch (error) {
+      console.error('Error creating order:', error);
+      
+      // Handle different error scenarios
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.';
+      alert(errorMessage);
+    } finally {
+      setIsCreatingOrder(false);
+    }
   };
 
   return (
@@ -88,10 +226,47 @@ const Payment = () => {
             <div className="form-section">
               <h2 className="section-title">Thông tin giao hàng</h2>
               
-              <div className="login-prompt">
-                <span>Bạn đã có tài khoản? </span>
-                <Link to="/login" className="login-link">Đăng nhập</Link>
-              </div>
+              {/* User Info Section - Only show if authenticated */}
+              {isAuthenticated && user ? (
+                <div className="user-info-section">
+                  <div className="user-info-display">
+                    <div className="user-details">
+                      <span className="user-name">{user.fullname || user.username}</span>
+                      {user.email && <span className="user-email">({user.email})</span>}
+                    </div>
+                    <button onClick={handleLogout} className="logout-btn">
+                      Đăng xuất
+                    </button>
+                  </div>
+
+                  {/* Address Selection */}
+                  {userAddresses.length > 0 && (
+                    <div className="address-selection">
+                      <label className="address-selection-label">
+                        Chọn địa chỉ có sẵn:
+                      </label>
+                      <select
+                        value={selectedAddressId}
+                        onChange={(e) => handleAddressSelection(e.target.value)}
+                        className="address-select"
+                      >
+                        <option value="">-- Chọn địa chỉ --</option>
+                        {userAddresses.map((address) => (
+                          <option key={address.id} value={address.id}>
+                            {address.recipientName} - {address.addressDetail}
+                            {address.isDefault ? ' (Mặc định)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="login-prompt">
+                  <span>Bạn đã có tài khoản? </span>
+                  <Link to="/login" className="login-link">Đăng nhập</Link>
+                </div>
+              )}
 
               <form className="shipping-form">
                 <div className="form-group">
@@ -131,79 +306,21 @@ const Payment = () => {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <input
-                    type="text"
-                    name="address"
-                    placeholder="Địa chỉ"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    className="form-input"
-                    required
-                  />
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group third">
-                    <select
-                      name="province"
-                      value={formData.province}
-                      onChange={handleInputChange}
-                      className="form-select"
-                    >
-                      <option value="">Chọn tỉnh / thành</option>
-                      <option value="hcm">TP. Hồ Chí Minh</option>
-                      <option value="hn">Hà Nội</option>
-                      <option value="dn">Đà Nẵng</option>
-                    </select>
-                  </div>
-                  <div className="form-group third">
-                    <select
-                      name="district"
-                      value={formData.district}
-                      onChange={handleInputChange}
-                      className="form-select"
-                    >
-                      <option value="">Chọn quận / huyện</option>
-                      <option value="q1">Quận 1</option>
-                      <option value="q3">Quận 3</option>
-                      <option value="q7">Quận 7</option>
-                    </select>
-                  </div>
-                  <div className="form-group third">
-                    <select
-                      name="ward"
-                      value={formData.ward}
-                      onChange={handleInputChange}
-                      className="form-select"
-                    >
-                      <option value="">Chọn phường / xã</option>
-                      <option value="p1">Phường 1</option>
-                      <option value="p2">Phường 2</option>
-                      <option value="p3">Phường 3</option>
-                    </select>
-                  </div>
-                </div>
+                                 <div className="form-group">
+                   <input
+                     type="text"
+                     name="address"
+                     placeholder="Địa chỉ"
+                     value={formData.address}
+                     onChange={handleInputChange}
+                     className="form-input"
+                     required
+                   />
+                 </div>
               </form>
             </div>
 
-            {/* Shipping Method */}
-            <div className="form-section">
-              <h2 className="section-title">Phương thức vận chuyển</h2>
-              <div className="shipping-method">
-                <div className="shipping-option">
-                  <div className="shipping-icon">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                      <line x1="9" y1="9" x2="15" y2="9"/>
-                      <line x1="9" y1="12" x2="15" y2="12"/>
-                      <line x1="9" y1="15" x2="15" y2="15"/>
-                    </svg>
-                  </div>
-                  <p>Vui lòng chọn tỉnh / thành để có danh sách phương thức vận chuyển.</p>
-                </div>
-              </div>
-            </div>
+
 
             {/* Payment Method */}
             <div className="form-section">
@@ -274,8 +391,12 @@ const Payment = () => {
             {/* Action Buttons */}
             <div className="form-actions">
               <Link to="/cart" className="back-btn">Giỏ hàng</Link>
-              <button onClick={handleCompleteOrder} className="complete-order-btn">
-                Hoàn tất đơn hàng
+              <button 
+                onClick={handleCompleteOrder} 
+                className="complete-order-btn"
+                disabled={isCreatingOrder}
+              >
+                {isCreatingOrder ? 'Đang xử lý...' : 'Hoàn tất đơn hàng'}
               </button>
             </div>
           </div>
@@ -344,7 +465,7 @@ const Payment = () => {
                 <div className="total-row final">
                   <span className="total-label">Tổng cộng</span>
                   <div className="final-total">
-                    <span className="currency">VND</span>
+                 
                     <span className="amount">{formatPrice(total)}</span>
                   </div>
                 </div>
@@ -362,4 +483,4 @@ const Payment = () => {
   );
 };
 
-export default Payment; 
+export default Payment;
