@@ -176,6 +176,26 @@ export const CartProvider = ({ children }) => {
   };
 
   // --- CÁC GIÁ TRỊ TÍNH TOÁN ---
+  // --- XÓA TOÀN BỘ GIỎ HÀNG ---
+  const clearCart = async () => {
+    setIsLoading(true);
+    if (isAuthenticated) {
+      try {
+        await cartService.clearCart();
+        setCartItems([]);
+      } catch (error) {
+        console.error("Lỗi khi xóa giỏ hàng:", error);
+        // Still clear frontend cart even if backend fails
+        setCartItems([]);
+      }
+    } else {
+      // User chưa đăng nhập: Xóa localStorage
+      localStorage.removeItem(CART_STORAGE_KEY);
+      setCartItems([]);
+    }
+    setIsLoading(false);
+  };
+
   const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
 
@@ -185,6 +205,7 @@ export const CartProvider = ({ children }) => {
     addToCart,
     removeFromCart,
     updateQuantity,
+    clearCart,
     totalAmount,
     totalItems,
     isCartOpen,

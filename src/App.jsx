@@ -11,6 +11,7 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Cart from './pages/Cart';
 import Payment from './pages/Payment';
+import CheckOut from './pages/CheckOut';
 import AccountProfile from './pages/Account/AccountProfile';
 import AccountAddresses from './pages/Account/AccountAddresses';
 import AccountMyOrder from './pages/Account/AccountMyOrder';
@@ -33,6 +34,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/payment" element={<Payment />} />
+              <Route path="/checkout" element={<CheckOut />} />
               <Route path="/blog" element={<Blog />} />
               
               {/* Account Pages with AccountLayout */}
