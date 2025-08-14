@@ -165,9 +165,15 @@ const Payment = () => {
       // Clear the cart after successful order creation
       await clearCart();
 
-      // Prepare order data for checkout page (using backend response)
+      // Prepare order data for checkout page using ACTUAL order data from backend
       const orderData = {
         orderId: `#${backendOrderResponse.id}`,
+        orderInfo: {
+          id: backendOrderResponse.id,
+          totalPrice: backendOrderResponse.totalPrice,
+          status: backendOrderResponse.status,
+          createdAt: backendOrderResponse.createdAt
+        },
         customerInfo: {
           fullName: formData.fullName,
           email: formData.email,
@@ -175,19 +181,23 @@ const Payment = () => {
           address: formData.address
         },
         paymentMethod: paymentMethod,
+        // Use actual order items from backend response
         items: backendOrderResponse.orderItems.map(item => ({
-          id: item.productVariantId,
+          productVariantId: item.productVariantId,
           name: item.productName,
           color: item.colorName,
           size: item.sizeName,
           quantity: item.quantity,
           price: item.price,
-          image: item.imageUrl
+          image: item.imageUrl,
+          // Calculate total price for each item
+          totalPrice: item.price * item.quantity
         })),
+        // Use actual order totals from backend
         total: backendOrderResponse.totalPrice,
-        shippingFee: shippingFee,
-        discount: discount,
         subtotal: backendOrderResponse.totalPrice,
+        shippingFee: 0, // Free shipping as defined in UI
+        discount: 0,    // No discount applied in current flow
         orderDate: backendOrderResponse.createdAt
       };
 
@@ -439,18 +449,6 @@ const Payment = () => {
                 </div>
               </div>
 
-              {/* Customer Login */}
-              <div className="customer-section">
-                <div className="customer-login">
-                  <span>Khách hàng thân thiết</span>
-                  <button 
-                    className="customer-login-btn"
-                    onClick={() => navigate('/login')}
-                  >
-                    Đăng nhập
-                  </button>
-                </div>
-              </div>
 
               {/* Order Total */}
               <div className="order-total">
