@@ -28,7 +28,7 @@ const orderService = {
         params: {
           page,
           size,
-          sort: sort.split(',')
+          sort: sort
         }
       });
       return response.data;
