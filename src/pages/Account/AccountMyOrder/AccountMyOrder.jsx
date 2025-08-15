@@ -1,125 +1,57 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
+import orderService from '../../../services/orderService'; // Import orderService
 import './AccountMyOrder.css';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const AccountMyOrder = () => {
-  const { user } = useAuth();
+  const { user } = useAuth(); // Mặc dù không dùng trực tiếp, giữ lại để biết user đã đăng nhập
   const [activeTab, setActiveTab] = useState('all');
   const [expandedOrders, setExpandedOrders] = useState(new Set());
 
-  // Mock data cho đơn hàng
-  const [orders, setOrders] = useState([
-    {
-      id: 'DH001',
-      date: '2024-12-15',
-      status: 'delivered',
-      statusText: 'Đã giao',
-      total: 850000,
-      items: [
-        {
-          id: 1,
-          name: 'Áo Thun Nam Basic',
-          image: '/uploads/product1.webp',
-          size: 'L',
-          color: 'Trắng',
-          quantity: 2,
-          price: 250000
-        },
-        {
-          id: 2,
-          name: 'Quần Jeans Slim Fit',
-          image: '/uploads/product2.webp',
-          size: 'M',
-          color: 'Xanh đậm',
-          quantity: 1,
-          price: 350000
-        }
-      ]
-    },
-    {
-      id: 'DH002',
-      date: '2024-12-20',
-      status: 'shipping',
-      statusText: 'Đang giao',
-      total: 1200000,
-      items: [
-        {
-          id: 3,
-          name: 'Áo Hoodie Unisex',
-          image: '/uploads/product3.webp',
-          size: 'XL',
-          color: 'Đen',
-          quantity: 1,
-          price: 450000
-        },
-        {
-          id: 4,
-          name: 'Giày Sneaker Nam',
-          image: '/uploads/product4.webp',
-          size: '42',
-          color: 'Trắng',
-          quantity: 1,
-          price: 750000
-        }
-      ]
-    },
-    {
-      id: 'DH003',
-      date: '2024-12-22',
-      status: 'processing',
-      statusText: 'Đang xử lý',
-      total: 650000,
-      items: [
-        {
-          id: 5,
-          name: 'Áo Khoác Bomber',
-          image: '/uploads/product5.webp',
-          size: 'L',
-          color: 'Xanh navy',
-          quantity: 1,
-          price: 650000
-        }
-      ]
-    },
-    {
-      id: 'DH004',
-      date: '2024-12-25',
-      status: 'cancelled',
-      statusText: 'Đã hủy',
-      total: 400000,
-      items: [
-        {
-          id: 6,
-          name: 'Áo Polo Nam',
-          image: '/uploads/product6.webp',
-          size: 'M',
-          color: 'Xanh dương',
-          quantity: 2,
-          price: 200000
-        }
-      ]
-    }
-  ]);
+  // --- STATE ĐỂ QUẢN LÝ DỮ LIỆU TỪ API ---
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  // Optional: State để quản lý phân trang
+  // const [pagination, setPagination] = useState({ page: 0, size: 10, totalPages: 1 });
 
-  const tabs = [
-    { id: 'all', label: 'Tất cả', count: orders.length },
-    { id: 'processing', label: 'Đang xử lý', count: orders.filter(o => o.status === 'processing').length },
-    { id: 'shipping', label: 'Đang giao', count: orders.filter(o => o.status === 'shipping').length },
-    { id: 'delivered', label: 'Đã giao', count: orders.filter(o => o.status === 'delivered').length },
-    { id: 'cancelled', label: 'Đã hủy', count: orders.filter(o => o.status === 'cancelled').length }
-  ];
+  // --- GỌI API KHI COMPONENT ĐƯỢC MOUNT ---
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        // Gọi API để lấy danh sách đơn hàng, bạn có thể truyền tham số phân trang ở đây
+        const response = await orderService.getUserOrders(0, 10);
+        setOrders(response.content); // API trả về dữ liệu trong thuộc tính 'content'
+      } catch (err) {
+        console.error("Lỗi khi tải đơn hàng:", err);
+        setError("Không thể tải danh sách đơn hàng. Vui lòng thử lại sau.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const filteredOrders = activeTab === 'all' 
-    ? orders 
-    : orders.filter(order => order.status === activeTab);
+    fetchOrders();
+  }, []); // Mảng rỗng đảm bảo useEffect chỉ chạy 1 lần
 
-  const getStatusColor = (status) => {
+  // --- HÀM HỖ TRỢ ---
+
+  // Ánh xạ trạng thái từ backend sang frontend (text, class, color)
+  const mapOrderStatus = (status) => {
     switch (status) {
-      case 'processing': return '#ffc107';
-      case 'shipping': return '#17a2b8';
-      case 'delivered': return '#28a745';
-      case 'cancelled': return '#dc3545';
-      default: return '#6c757d';
+      case 'PENDING':
+        return { text: 'Đang xử lý', className: 'processing', color: '#ffc107' };
+      case 'PAID':
+        return { text: 'Đã thanh toán', className: 'processing', color: '#ffc107' }; // Có thể coi là đang xử lý
+      case 'SHIPPED':
+        return { text: 'Đang giao', className: 'shipping', color: '#17a2b8' };
+      // Giả sử bạn sẽ có trạng thái DELIVERED trong tương lai
+      case 'DELIVERED':
+        return { text: 'Đã giao', className: 'delivered', color: '#28a745' };
+      case 'CANCELLED':
+        return { text: 'Đã hủy', className: 'cancelled', color: '#dc3545' };
+      default:
+        return { text: status, className: 'default', color: '#6c757d' };
     }
   };
 
@@ -131,10 +63,13 @@ const AccountMyOrder = () => {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -148,21 +83,54 @@ const AccountMyOrder = () => {
     setExpandedOrders(newExpandedOrders);
   };
 
+  // --- LOGIC LỌC VÀ HIỂN THỊ ---
+
+  const tabs = [
+    { id: 'all', label: 'Tất cả' },
+    { id: 'processing', label: 'Đang xử lý', apiStatus: ['PENDING', 'PAID'] },
+    { id: 'shipping', label: 'Đang giao', apiStatus: ['SHIPPED'] },
+    { id: 'delivered', label: 'Đã giao', apiStatus: ['DELIVERED'] }, // Giả định
+    { id: 'cancelled', label: 'Đã hủy', apiStatus: ['CANCELLED'] }
+  ];
+
+  const filteredOrders = activeTab === 'all'
+    ? orders
+    : orders.filter(order => {
+        const activeTabData = tabs.find(tab => tab.id === activeTab);
+        return activeTabData.apiStatus.includes(order.status);
+      });
+
+  // --- RENDER ---
+
+  if (loading) {
+    return <div className="account-orders-container"><p>Đang tải đơn hàng...</p></div>;
+  }
+
+  if (error) {
+    return <div className="account-orders-container"><p style={{ color: 'red' }}>{error}</p></div>;
+  }
+
   return (
     <div className="account-orders-container">
       <h1 className="page-title">Đơn hàng của bạn</h1>
-      
+
       {/* Tabs */}
       <div className="order-tabs">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label} ({tab.count})
-          </button>
-        ))}
+        {tabs.map(tab => {
+           const count = tab.id === 'all'
+           ? orders.length
+           : orders.filter(o => tab.apiStatus.includes(o.status)).length;
+
+          return (
+            <button
+              key={tab.id}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label} ({count})
+            </button>
+          )
+        })}
       </div>
 
       {/* Orders List */}
@@ -177,81 +145,84 @@ const AccountMyOrder = () => {
             </button>
           </div>
         ) : (
-          filteredOrders.map(order => (
-            <div key={order.id} className="order-card">
-              {/* Order Header */}
-              <div className="order-header">
-                <div className="order-info">
-                  <div className="order-id">
-                    <strong>Đơn hàng #{order.id}</strong>
+          filteredOrders.map(order => {
+            const orderStatus = mapOrderStatus(order.status);
+            return (
+              <div key={order.id} className="order-card">
+                {/* Order Header */}
+                <div className="order-header">
+                  <div className="order-info">
+                    <div className="order-id">
+                      <strong>Đơn hàng #{order.id}</strong>
+                    </div>
+                    <div className="order-date">
+                      Đặt hàng: {formatDate(order.createdAt)}
+                    </div>
                   </div>
-                  <div className="order-date">
-                    Đặt hàng: {formatDate(order.date)}
-                  </div>
-                </div>
-                <div className="order-status">
-                  <span 
-                    className="status-badge"
-                    style={{ backgroundColor: getStatusColor(order.status) }}
-                  >
-                    {order.statusText}
-                  </span>
-                  <button 
-                    className="expand-btn"
-                    onClick={() => toggleOrderExpansion(order.id)}
-                    title={expandedOrders.has(order.id) ? "Thu gọn" : "Xem chi tiết"}
-                  >
-                    <span className={`arrow ${expandedOrders.has(order.id) ? 'expanded' : ''}`}>
-                      ▼
+                  <div className="order-status">
+                    <span
+                      className="status-badge"
+                      style={{ backgroundColor: orderStatus.color }}
+                    >
+                      {orderStatus.text}
                     </span>
-                  </button>
+                    <button
+                      className="expand-btn"
+                      onClick={() => toggleOrderExpansion(order.id)}
+                      title={expandedOrders.has(order.id) ? "Thu gọn" : "Xem chi tiết"}
+                    >
+                      <span className={`arrow ${expandedOrders.has(order.id) ? 'expanded' : ''}`}>
+                        ▼
+                      </span>
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Order Items */}
-              {expandedOrders.has(order.id) && (
-                <div className="order-items">
-                  {order.items.map(item => (
-                    <div key={item.id} className="order-item">
-                      <div className="item-image">
-                        <img src={item.image} alt={item.name} />
-                      </div>
-                      <div className="item-details">
-                        <h4 className="item-name">{item.name}</h4>
-                        <div className="item-specs">
-                          <span>Size: {item.size}</span>
-                          <span>Màu: {item.color}</span>
-                          <span>SL: {item.quantity}</span>
+                {/* Order Items */}
+                {expandedOrders.has(order.id) && (
+                  <div className="order-items">
+                    {order.orderItems.map(item => (
+                      <div key={item.productVariantId} className="order-item">
+                        <div className="item-image">
+                          <img src={item.imageUrl} alt={item.productName} />
+                        </div>
+                        <div className="item-details">
+                          <h4 className="item-name">{item.productName}</h4>
+                          <div className="item-specs">
+                            <span>Size: {item.sizeName}</span>
+                            <span>Màu: {item.colorName}</span>
+                            <span>SL: {item.quantity}</span>
+                          </div>
+                        </div>
+                        <div className="item-price">
+                          {formatCurrency(item.price)}
                         </div>
                       </div>
-                      <div className="item-price">
-                        {formatCurrency(item.price)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
 
-              {/* Order Footer */}
-              <div className="order-footer">
-                <div className="order-total">
-                  <strong>Tổng tiền: {formatCurrency(order.total)}</strong>
-                </div>
-                <div className="order-actions">
-                  <button className="btn-secondary">Xem chi tiết</button>
-                  {order.status === 'delivered' && (
-                    <button className="btn-primary">Đánh giá</button>
-                  )}
-                  {order.status === 'processing' && (
-                    <button className="btn-danger">Hủy đơn</button>
-                  )}
-                  {order.status === 'delivered' && (
-                    <button className="btn-primary">Mua lại</button>
-                  )}
+                {/* Order Footer */}
+                <div className="order-footer">
+                  <div className="order-total">
+                    <strong>Tổng tiền: {formatCurrency(order.totalPrice)}</strong>
+                  </div>
+                  <div className="order-actions">
+                    <button className="btn-secondary">Xem chi tiết</button>
+                    {order.status === 'DELIVERED' && ( // Giả định
+                      <button className="btn-primary">Đánh giá</button>
+                    )}
+                    {order.status === 'PENDING' && (
+                      <button className="btn-danger">Hủy đơn</button>
+                    )}
+                     {order.status === 'DELIVERED' && ( // Giả định
+                      <button className="btn-primary">Mua lại</button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
     </div>
