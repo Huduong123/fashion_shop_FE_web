@@ -5,9 +5,9 @@ const orderService = {
    * Tạo đơn hàng mới từ giỏ hàng
    * @returns {Promise<object>} - Thông tin đơn hàng đã tạo
    */
-  createOrderFromCart: async () => {
+  createOrderFromCart: async (paymentMethodId) => {
     try {
-      const response = await api.post('/users/orders');
+      const response = await api.post('/users/orders', {paymentMethodId});
       return response.data;
     } catch (error) {
       console.error('Error creating order:', error.response || error);
