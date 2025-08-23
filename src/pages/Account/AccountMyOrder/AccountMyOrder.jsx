@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import orderService from '../../../services/orderService'; // Import orderService
+import { Link } from 'react-router-dom';
+import orderService from '../../../services/orderService'; 
 import './AccountMyOrder.css';
 import { useAuth } from '../../../contexts/AuthContext';
 
 const AccountMyOrder = () => {
-  const { user } = useAuth(); // Mặc dù không dùng trực tiếp, giữ lại để biết user đã đăng nhập
+  const { user } = useAuth(); 
   const [activeTab, setActiveTab] = useState('all');
   const [expandedOrders, setExpandedOrders] = useState(new Set());
 
@@ -12,9 +13,6 @@ const AccountMyOrder = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // Optional: State để quản lý phân trang
-  // const [pagination, setPagination] = useState({ page: 0, size: 10, totalPages: 1 });
-
   // --- GỌI API KHI COMPONENT ĐƯỢC MOUNT ---
   useEffect(() => {
     const fetchOrders = async () => {
@@ -32,8 +30,31 @@ const AccountMyOrder = () => {
     };
 
     fetchOrders();
-  }, []); // Mảng rỗng đảm bảo useEffect chỉ chạy 1 lần
+  }, []); 
 
+ const handleCancelOrder = async (orderId) => {
+  if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) {
+    return;
+  }
+  try {
+    await orderService.cancelOrder(orderId);
+    setOrders(currentOrders =>
+      currentOrders.map(order =>
+        order.id === orderId
+          ? { ...order, status: 'CANCELLED' } // Cập nhật trạng thái của đơn hàng vừa hủy
+          : order
+      )
+    );
+
+    // (Tùy chọn) Hiển thị thông báo thành công
+    alert('Đã hủy đơn hàng thành công!');
+
+  } catch (err) {
+    console.error("Lỗi khi hủy đơn hàng:", err);
+    // (Tùy chọn) Hiển thị thông báo lỗi
+    alert('Hủy đơn hàng thất bại. Vui lòng thử lại.');
+  }
+};
   // --- HÀM HỖ TRỢ ---
 
   // Ánh xạ trạng thái từ backend sang frontend (text, class, color)
@@ -177,30 +198,34 @@ const AccountMyOrder = () => {
                     </button>
                   </div>
                 </div>
-
-                {/* Order Items */}
-                {expandedOrders.has(order.id) && (
-                  <div className="order-items">
-                    {order.orderItems.map(item => (
-                      <div key={item.productVariantId} className="order-item">
-                        <div className="item-image">
-                          <img src={item.imageUrl} alt={item.productName} />
-                        </div>
-                        <div className="item-details">
-                          <h4 className="item-name">{item.productName}</h4>
-                          <div className="item-specs">
-                            <span>Size: {item.sizeName}</span>
-                            <span>Màu: {item.colorName}</span>
-                            <span>SL: {item.quantity}</span>
-                          </div>
-                        </div>
-                        <div className="item-price">
-                          {formatCurrency(item.price)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+{/* Order Items */}
+{expandedOrders.has(order.id) && (
+                                    <div className="order-items">
+                                        {order.orderItems.map(item => (
+                                            // BƯỚC 2: BỌC CÁC PHẦN TỬ BẰNG THẺ LINK
+                                            <div key={item.productVariantId} className="order-item">
+                                                {/* Bọc hình ảnh */}
+                                                <Link to={`/product/${item.productId}`} className="item-image">
+                                                    <img src={item.imageUrl} alt={item.productName} />
+                                                </Link>
+                                                <div className="item-details">
+                                                    {/* Bọc tên sản phẩm */}
+                                                    <h4 className="item-name">
+                                                        <Link to={`/product/${item.productId}`} className="product-link">
+                                                            {item.productName}
+                                                        </Link>
+                                                    </h4>
+                                                    <div className="item-specs">
+                                                        <span>Size: {item.sizeName}</span>
+                                                        <span>Màu: {item.colorName}</span>
+                                                        <span>SL: {item.quantity}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="item-price">{formatCurrency(item.price)}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
 
                 {/* Order Footer */}
                 <div className="order-footer">
@@ -208,16 +233,14 @@ const AccountMyOrder = () => {
                     <strong>Tổng tiền: {formatCurrency(order.totalPrice)}</strong>
                   </div>
                   <div className="order-actions">
-                    <button className="btn-secondary">Xem chi tiết</button>
+
                     {order.status === 'DELIVERED' && ( // Giả định
                       <button className="btn-primary">Đánh giá</button>
                     )}
                     {order.status === 'PENDING' && (
-                      <button className="btn-danger">Hủy đơn</button>
+                      <button className="btn-danger" onClick={() => handleCancelOrder(order.id)}>Hủy đơn</button>
                     )}
-                     {order.status === 'DELIVERED' && ( // Giả định
-                      <button className="btn-primary">Mua lại</button>
-                    )}
+                   
                   </div>
                 </div>
               </div>

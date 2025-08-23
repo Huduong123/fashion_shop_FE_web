@@ -430,3 +430,12 @@
     min-width: auto;
   }
 }
+.item-details .product-link {
+  text-decoration: none; /* Bỏ gạch chân */
+  color: inherit; /* Kế thừa màu chữ từ thẻ h4 cha */
+  transition: color 0.2s ease-in-out;
+}
+
+.item-details .product-link:hover {
+  color: var(--primary-color); /* Đổi màu khi di chuột vào để người dùng biết là có thể click */
+}
