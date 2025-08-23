@@ -168,14 +168,21 @@ const Payment = () => {
       await clearCart();
 
       // Chuẩn bị dữ liệu để gửi sang trang checkout
-      const selectedMethodDetails = paymentMethods.find(m => m.id === selectedPaymentMethodId);
+    
       const orderData = {
         orderId: `#${backendOrderResponse.id}`,
         orderInfo: backendOrderResponse,
         customerInfo: formData,
-        paymentMethod: selectedMethodDetails ? selectedMethodDetails.name : 'Không xác định',
+        // Lấy thẳng `code` từ response của backend
+        paymentMethod: backendOrderResponse.paymentMethod, 
         items: backendOrderResponse.orderItems.map(item => ({
-          ...item,
+          productVariantId: item.productVariantId,
+          name: item.productName,
+          image: item.imageUrl,
+          color: item.colorName,
+          size: item.sizeName,
+          quantity: item.quantity,
+          price: item.price,
           totalPrice: item.price * item.quantity
         })),
         total: backendOrderResponse.totalPrice,

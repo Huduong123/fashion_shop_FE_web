@@ -6,6 +6,8 @@ const CheckOut = () => {
   const location = useLocation();
   const { orderData } = location.state || {};
 
+
+
   // If no order data, redirect or show error
   if (!orderData) {
     return (
@@ -24,23 +26,6 @@ const CheckOut = () => {
   const formatPrice = (price) => {
     return (price || 0).toLocaleString('vi-VN') + 'đ';
   };
-
-  // Get payment method display text
-  const getPaymentMethodText = (method) => {
-    switch (method) {
-      case 'cod':
-        return 'Thanh toán khi giao hàng (COD)';
-      case 'momo':
-        return 'Ví MoMo';
-      case 'vnpay':
-        return 'Thẻ ATM/Visa/Master/JCB/QR Pay qua cổng VNPAY';
-      case 'shopeepay':
-        return 'Ví ShopeePay';
-      default:
-        return 'Thanh toán khi giao hàng (COD)';
-    }
-  };
-
   return (
     <div className="checkout-page">
       <div className="checkout-container">
@@ -78,7 +63,7 @@ const CheckOut = () => {
             <div className="info-group">
               <h3 className="info-label">Phương thức thanh toán</h3>
               <p className="payment-method-text">
-                {getPaymentMethodText(orderData.paymentMethod)}
+                {orderData.paymentMethod?.name || 'Không xác định'}
               </p>
             </div>
           </div>
@@ -92,19 +77,27 @@ const CheckOut = () => {
               
               <div className="items-list">
                 {orderData.items.map((item, index) => (
-                  <div key={`${item.productVariantId}-${index}`} className="order-item">
-                    <div className="item-image">
-                      <img src={item.image} alt={item.name} />
-                      <span className="item-quantity">{item.quantity}</span>
+                    <div key={`${item.productVariantId || index}-${index}`} className="order-item">
+                      <div className="item-image">
+                        <img 
+                          src={item.image || item.imageUrl || '/images/product-placeholder.jpg'} 
+                          alt={item.name || item.productName || 'Product'} 
+                          onError={(e) => {
+                            e.target.src = '/images/product-placeholder.jpg';
+                          }}
+                        />
+                        <span className="item-quantity">{item.quantity || 0}</span>
+                      </div>
+                      <div className="item-details">
+                        <h4 className="item-name">{item.name || item.productName || 'Tên sản phẩm không xác định'}</h4>
+                        <p className="item-variant">
+                          {(item.color || item.colorName || 'N/A')} / {(item.size || item.sizeName || 'N/A')}
+                        </p>
+                      </div>
+                      <div className="item-price">
+                        {formatPrice(item.totalPrice || (item.price * item.quantity) || 0)}
+                      </div>
                     </div>
-                    <div className="item-details">
-                      <h4 className="item-name">{item.name}</h4>
-                      <p className="item-variant">{item.color} / {item.size}</p>
-                    </div>
-                    <div className="item-price">
-                      {formatPrice(item.totalPrice || (item.price * item.quantity))}
-                    </div>
-                  </div>
                 ))}
               </div>
 
